@@ -1,5 +1,4 @@
 
-
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { AppContent, ContentContextType, Language, Translation, Pack, CustomSection, Lead, MobileRate, Promotion, MeteoConfig, CallButtonConfig } from '../types';
 import { TRANSLATIONS, PACKS, FIBER_RATES, MOBILE_RATES, IMAGES, CUSTOM_SECTIONS, PROMOTIONS, METEO_DEFAULT, INITIAL_VISITS, CALL_BUTTON_DEFAULT } from '../constants';
@@ -33,7 +32,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // Track initial load to prevent double analytics
   const analyticsTracked = useRef(false);
 
-  // --- 1. LOAD FROM SUPABASE ON MOUNT ---
+  // --- 1. LOAD DATA (PARALLEL FETCH) ---
   useEffect(() => {
     const fetchContent = async () => {
       // Guard: If credentials aren't set, don't try to fetch
@@ -45,28 +44,63 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       try {
         setIsLoading(true);
-        const { data, error } = await supabase
-          .from('site_content')
-          .select('content')
-          .single();
+        
+        // Fetch Config, Leads and Visits in parallel
+        const [configRes, leadsRes, visitsRes] = await Promise.all([
+            supabase.from('site_content').select('content').single(),
+            supabase.from('leads').select('*').order('created_at', { ascending: false }),
+            supabase.from('visits').select('*')
+        ]);
 
-        if (error) {
-            console.warn("Supabase load error (using defaults):", error.message);
-        } else if (data && data.content) {
-            // Merge defaults ensuring critical sections exist
-            const dbContent = data.content;
-            const merged: AppContent = {
-                ...INITIAL_CONTENT,
+        let loadedContent = { ...INITIAL_CONTENT };
+
+        // 1. Merge Config
+        if (configRes.data?.content) {
+            const dbContent = configRes.data.content;
+            loadedContent = {
+                ...loadedContent,
                 ...dbContent,
-                // Specific merges for arrays to ensure we don't lose structure
+                // Ensure critical objects exist even if DB JSON is partial
                 meteo: dbContent.meteo || INITIAL_CONTENT.meteo,
                 promotions: dbContent.promotions || INITIAL_CONTENT.promotions,
                 callButtonConfig: dbContent.callButtonConfig || INITIAL_CONTENT.callButtonConfig,
-                // Respect DB password if set, otherwise fallback to env/default
                 adminPassword: dbContent.adminPassword || INITIAL_CONTENT.adminPassword
             };
-            setContent(merged);
         }
+
+        // 2. Merge Leads (from SQL table, ignoring JSON leads if any)
+        if (leadsRes.data) {
+            // Map SQL columns to TS interface if needed (snake_case to camelCase handled mostly automatically or manually below)
+            const sqlLeads: Lead[] = leadsRes.data.map((l: any) => ({
+                id: l.id,
+                createdAt: l.created_at,
+                name: l.name,
+                phone: l.phone,
+                email: l.email,
+                address: l.address,
+                comments: l.comments,
+                summary: l.summary, // JSONB comes as object/array
+                totalPrice: l.total_price,
+                status: l.status
+            }));
+            loadedContent.leads = sqlLeads;
+        }
+
+        // 3. Merge Visits (from SQL table)
+        if (visitsRes.data) {
+             const sqlVisits = visitsRes.data.map((v: any) => ({
+                 week: v.week,
+                 source: v.source,
+                 count: v.count
+             }));
+             // If SQL visits exist, use them. Otherwise fallback to initial.
+             if (sqlVisits.length > 0) {
+                 loadedContent.visits = sqlVisits;
+             }
+        }
+
+        setContent(loadedContent);
+
       } catch (err) {
         console.error("Unexpected error loading content:", err);
       } finally {
@@ -77,7 +111,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     fetchContent();
   }, []);
 
-  // --- 2. AUTOMATIC ANALYTICS TRACKING ---
+  // --- 2. ANALYTICS TRACKING (SQL UPSERT) ---
   useEffect(() => {
     if (isLoading || !isSupabaseConfigured || analyticsTracked.current) return;
 
@@ -86,139 +120,145 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const today = new Date().toISOString().split('T')[0];
       const sessionKey = `eports_visit_${today}`;
       
-      // Check session storage to avoid counting reloads as new visits
       if (sessionStorage.getItem(sessionKey)) return;
 
       try {
-        // Calculate Week Number (ISO 8601)
         const d = new Date();
         d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
         const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
         const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
         const currentWeek = `${d.getUTCFullYear()}-W${weekNo}`;
 
-        // Determine Source
-        let source: 'direct' | 'social' | 'organic' | 'ads' = 'direct';
+        let source: string = 'direct';
         const ref = document.referrer.toLowerCase();
-        if (ref.includes('google') || ref.includes('bing') || ref.includes('yahoo')) source = 'organic';
-        else if (ref.includes('facebook') || ref.includes('instagram') || ref.includes('twitter') || ref.includes('linkedin')) source = 'social';
-        else if (window.location.search.includes('gclid') || window.location.search.includes('utm_source')) source = 'ads';
+        if (ref.includes('google') || ref.includes('bing')) source = 'organic';
+        else if (ref.includes('facebook') || ref.includes('instagram') || ref.includes('x.com')) source = 'social';
+        else if (window.location.search.includes('utm_source')) source = 'ads';
 
-        // FETCH LATEST DATA TO AVOID RACE CONDITIONS
-        const { data } = await supabase.from('site_content').select('content').single();
-        if (!data?.content) return;
+        // Update Local State Optimistically
+        setContent(prev => {
+            const newVisits = [...(prev.visits || [])];
+            const idx = newVisits.findIndex(v => v.week === currentWeek && v.source === source);
+            if (idx >= 0) newVisits[idx].count++;
+            else newVisits.push({ week: currentWeek, source: source as any, count: 1 });
+            return { ...prev, visits: newVisits };
+        });
 
-        const currentContent = data.content as AppContent;
-        const currentVisits = currentContent.visits || [];
-        
-        // Find existing entry for this week/source
-        const existingIndex = currentVisits.findIndex(v => v.week === currentWeek && v.source === source);
-        let newVisits = [...currentVisits];
+        // UPSERT into 'visits' table
+        // We first need to check if it exists because 'count' needs to be incremented
+        const { data: existing } = await supabase
+            .from('visits')
+            .select('id, count')
+            .eq('week', currentWeek)
+            .eq('source', source)
+            .single();
 
-        if (existingIndex >= 0) {
-          newVisits[existingIndex].count += 1;
+        if (existing) {
+            await supabase.from('visits').update({ count: existing.count + 1 }).eq('id', existing.id);
         } else {
-          newVisits.push({ week: currentWeek, source, count: 1 });
+            await supabase.from('visits').insert({ week: currentWeek, source, count: 1 });
         }
-
-        // Limit visits array size (keep last 52 weeks approx)
-        if (newVisits.length > 200) {
-            newVisits = newVisits.slice(-200);
-        }
-
-        // SAVE TO DB
-        await supabase
-          .from('site_content')
-          .upsert({ id: 1, content: { ...currentContent, visits: newVisits } });
         
-        // Update local state smoothly
-        setContent(prev => ({ ...prev, visits: newVisits }));
         sessionStorage.setItem(sessionKey, 'true');
-        console.log(`Visit tracked: ${source} for ${currentWeek}`);
+        console.log(`Visit tracked: ${source}`);
 
       } catch (err) {
         console.error("Error tracking visit:", err);
       }
     };
 
-    // Small delay to ensure app is stable
     const timer = setTimeout(trackVisit, 2000);
     return () => clearTimeout(timer);
   }, [isLoading]);
 
-  // --- 3. SAVE FUNCTION (MANUAL) ---
+  // --- 3. SAVE CONTENT (CONFIG ONLY) ---
   const saveContent = async () => {
     if (!isSupabaseConfigured) {
-        alert("Mode local: Supabase no està configurat. Els canvis no es desaran al núvol.");
+        alert("Mode local: Supabase no està configurat.");
         return;
     }
 
     try {
+       // Create a copy of content for the DB
+       const contentToSave = { ...content };
+       
+       // CRITICAL: Remove Leads and Visits from the JSON blob.
+       // These are now handled by their own SQL tables.
+       // We don't want to overwrite them or store stale data in site_content.
+       delete (contentToSave as any).leads;
+       delete (contentToSave as any).visits;
+
        const { error } = await supabase
         .from('site_content')
-        .upsert({ id: 1, content: content });
+        .upsert({ id: 1, content: contentToSave });
        
        if (error) throw error;
-       console.log("Content saved successfully to Supabase");
+       console.log("Config saved successfully.");
     } catch (err) {
         console.error("Failed to save content:", err);
         throw err;
     }
   };
 
-  // --- 4. REAL-TIME UPDATES & NOTIFICATIONS ---
-  const playNotificationSound = () => {
-    try {
-      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContext) return;
-      const ctx = new AudioContext();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.setValueAtTime(880, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.5);
-      gain.gain.setValueAtTime(0.1, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.5);
-    } catch (e) { /* silent fail */ }
-  };
-
+  // --- 4. REAL-TIME SUBSCRIPTION ---
   useEffect(() => {
     if (!isSupabaseConfigured) return;
 
-    const channel = supabase
-      .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'site_content', filter: 'id=eq.1' },
-        (payload) => {
-          const newContent = payload.new.content as AppContent;
+    // Listen for Config Changes
+    const configSub = supabase
+      .channel('config-changes')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'site_content' }, (payload) => {
+          const newContent = payload.new.content;
           if (newContent) {
-             setContent((prev) => {
-                 // Detect new leads for notification
-                 const prevLeads = prev.leads || [];
-                 const newLeads = newContent.leads || [];
-                 if (newLeads.length > prevLeads.length) {
-                     // Check if the new lead is recent (last 10 seconds) to avoid noise on reload
-                     const latestLead = newLeads[0]; // Assuming prepended
-                     const leadTime = new Date(latestLead.createdAt).getTime();
-                     if (Date.now() - leadTime < 10000) {
-                        playNotificationSound();
-                     }
-                 }
-                 return { ...prev, ...newContent };
-             });
+              setContent(prev => ({ 
+                  ...prev, 
+                  ...newContent,
+                  // Preserve local data that shouldn't be overwritten by config updates if config doesn't have them
+                  leads: prev.leads, 
+                  visits: prev.visits 
+              }));
           }
-        }
-      )
+      })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    // Listen for NEW LEADS (Notification)
+    const leadsSub = supabase
+      .channel('leads-changes')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'leads' }, (payload) => {
+          const newLead = payload.new;
+          const mappedLead: Lead = {
+              id: newLead.id,
+              createdAt: newLead.created_at,
+              name: newLead.name,
+              phone: newLead.phone,
+              email: newLead.email,
+              address: newLead.address,
+              comments: newLead.comments,
+              summary: newLead.summary,
+              totalPrice: newLead.total_price,
+              status: newLead.status
+          };
+
+          // Play Sound
+          try {
+             const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); 
+             audio.play().catch(e => console.log('Audio autoplay blocked'));
+          } catch(e) {}
+
+          setContent(prev => ({
+              ...prev,
+              leads: [mappedLead, ...prev.leads]
+          }));
+      })
+      .subscribe();
+
+    return () => { 
+        supabase.removeChannel(configSub);
+        supabase.removeChannel(leadsSub);
+    };
   }, []);
 
-  // --- HELPERS (State Updaters) ---
+  // --- HELPERS ---
   
   const updateTranslation = (lang: Language, section: keyof Translation, key: string, value: any) => {
     setContent(prev => ({
@@ -236,7 +276,6 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
-  // Generic updaters for arrays/objects
   const updatePack = (pack: Pack) => setContent(prev => ({ ...prev, packs: prev.packs.map(p => p.id === pack.id ? pack : p) }));
   const addPack = (pack: Pack) => setContent(prev => ({ ...prev, packs: [...prev.packs, pack] }));
   const deletePack = (id: string) => setContent(prev => ({ ...prev, packs: prev.packs.filter(p => p.id !== id) }));
@@ -255,44 +294,51 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const addCustomSection = (section: CustomSection) => setContent(prev => ({ ...prev, customSections: [...prev.customSections, section] }));
   const deleteCustomSection = (id: string) => setContent(prev => ({ ...prev, customSections: prev.customSections.filter(s => s.id !== id) }));
 
-  // --- LEAD MANAGEMENT (With Direct Save) ---
+  // --- LEAD ACTIONS (SQL) ---
   const addLead = async (leadData: Omit<Lead, 'id' | 'createdAt' | 'status'>) => {
-    const newLead: Lead = {
+    const newLead = {
       id: `lead_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      createdAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),
       status: 'NEW',
-      ...leadData
+      name: leadData.name,
+      phone: leadData.phone,
+      email: leadData.email,
+      address: leadData.address,
+      comments: leadData.comments,
+      summary: leadData.summary,
+      total_price: leadData.totalPrice
     };
 
-    // 1. Optimistic Update
-    setContent(prev => {
-        const nextContent = { ...prev, leads: [newLead, ...prev.leads] };
-        return nextContent;
-    });
+    // Optimistic UI update
+    const uiLead: Lead = {
+        ...leadData,
+        id: newLead.id,
+        createdAt: newLead.created_at,
+        status: 'NEW'
+    };
+    setContent(prev => ({ ...prev, leads: [uiLead, ...prev.leads] }));
 
-    // 2. Direct DB Save (Critical Data)
     if (isSupabaseConfigured) {
-        try {
-            // Fetch current state to avoid overwriting updates from other users
-            const { data } = await supabase.from('site_content').select('content').single();
-            const currentDBContent = data?.content || content;
-            const nextContent = { 
-                ...currentDBContent, 
-                leads: [newLead, ...(currentDBContent.leads || [])] 
-            };
-            await supabase.from('site_content').upsert({ id: 1, content: nextContent });
-        } catch (e) {
-            console.error("Error saving lead to DB", e);
-        }
+        await supabase.from('leads').insert(newLead);
     }
   };
 
-  const updateLeadStatus = (id: string, status: Lead['status']) => {
+  const updateLeadStatus = async (id: string, status: Lead['status']) => {
+      // Optimistic
       setContent(prev => ({ ...prev, leads: prev.leads.map(lead => lead.id === id ? { ...lead, status } : lead) }));
+      
+      if (isSupabaseConfigured) {
+          await supabase.from('leads').update({ status }).eq('id', id);
+      }
   };
 
-  const deleteLead = (id: string) => {
+  const deleteLead = async (id: string) => {
+      // Optimistic
       setContent(prev => ({ ...prev, leads: prev.leads.filter(lead => lead.id !== id) }));
+      
+      if (isSupabaseConfigured) {
+          await supabase.from('leads').delete().eq('id', id);
+      }
   };
 
   const updateNotificationEmail = (email: string) => setContent(prev => ({ ...prev, notificationEmail: email }));
@@ -300,12 +346,11 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const updateCallButtonConfig = (config: CallButtonConfig) => setContent(prev => ({ ...prev, callButtonConfig: config }));
 
   const resetToDefaults = () => {
-    if(window.confirm("ATENCIÓ: Això esborrarà TOTA la base de dades i restaurarà la web original. Continuar?")) {
+    if(window.confirm("ATENCIÓ: Això esborrarà TOTA la configuració. Continuar?")) {
         setContent(INITIAL_CONTENT);
         if (isSupabaseConfigured) {
-            supabase.from('site_content').upsert({ id: 1, content: INITIAL_CONTENT }).then(() => {
-                alert("Web restaurada als valors de fàbrica.");
-            });
+            // Only reset content, don't delete leads history!
+            saveContent(); 
         }
     }
   };
@@ -315,7 +360,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
           alert("L'arxiu JSON no és vàlid.");
           return;
       }
-      setContent({ ...INITIAL_CONTENT, ...data });
+      setContent(prev => ({ ...prev, ...data }));
   };
 
   return (
