@@ -17,14 +17,28 @@ import { LiveCameras } from './components/LiveCameras';
 import { FloatingCallButton } from './components/FloatingCallButton';
 import { ContentProvider, useContent } from './contexts/ContentContext';
 import { Language } from './types';
+import { Loader2 } from 'lucide-react';
+import { Logo } from './components/Logo';
 
 const AppContent: React.FC = () => {
   const [lang, setLang] = useState<Language>('ca');
   const [showAdmin, setShowAdmin] = useState(false);
-  const { customSections } = useContent();
+  const { customSections, isLoading } = useContent();
+
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-white z-[9999] flex flex-col items-center justify-center animate-fade-in">
+         <div className="w-32 mb-8 animate-pulse">
+            <Logo className="w-full h-auto" />
+         </div>
+         <Loader2 className="w-10 h-10 text-brand-pink animate-spin" />
+         <p className="mt-4 text-gray-400 font-medium text-sm tracking-widest uppercase">Carregant e-ports...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex flex-col font-sans antialiased text-gray-900 bg-white relative">
+    <div className="min-h-screen flex flex-col font-sans antialiased text-gray-900 bg-white relative animate-fade-in">
       {showAdmin && <AdminDashboard onClose={() => setShowAdmin(false)} />}
       
       <Navbar lang={lang} setLang={setLang} onOpenAdmin={() => setShowAdmin(true)} />
