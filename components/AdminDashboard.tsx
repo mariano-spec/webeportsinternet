@@ -1,9 +1,10 @@
 
+
 import React, { useState } from 'react';
 import { useContent } from '../contexts/ContentContext';
-import { Language, Pack, CustomSection, Lead, Feature, Testimonial, FAQItem, AppContent, CameraItem, MobileRate } from '../types';
-import { X, Upload, Save, Trash2, Plus, Layout, Smartphone, Wifi, Image as ImageIcon, RefreshCw, Users, Lock, Star, HelpCircle, Zap, Database, Download, AlertTriangle, Grid, Megaphone, Camera, ExternalLink, Eye, EyeOff, BarChart2, MapPin, Phone, Mail, Bell, Check } from 'lucide-react';
-import { IMAGES } from '../constants';
+import { Language, Pack, CustomSection, Lead, Feature, Testimonial, FAQItem, AppContent, CameraItem, MobileRate, CallButtonConfig } from '../types';
+import { X, Upload, Save, Trash2, Plus, Layout, Smartphone, Wifi, Image as ImageIcon, RefreshCw, Users, Lock, Star, HelpCircle, Zap, Database, Download, AlertTriangle, Grid, Megaphone, Camera, ExternalLink, Eye, EyeOff, BarChart2, MapPin, Phone, Mail, Bell, Check, Move } from 'lucide-react';
+import { IMAGES, CALL_BUTTON_DEFAULT } from '../constants';
 
 interface AdminDashboardProps {
   onClose: () => void;
@@ -58,8 +59,8 @@ const compressImage = (file: File): Promise<string> => {
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   const { 
-    translations, packs, mobileRates, promotions, meteo, images, heroOverlayOpacity, heroAlignment, customSections, leads, visits, notificationEmail, adminPassword,
-    updateTranslation, updatePack, addPack, deletePack, updateMobileRate, addMobileRate, deleteMobileRate, updatePromotion, updateMeteo, updateImage, updateHeroOpacity, updateHeroAlignment, addCustomSection, deleteCustomSection, updateLeadStatus, deleteLead, updateNotificationEmail, updateAdminPassword, resetToDefaults, importData, saveContent
+    translations, packs, mobileRates, promotions, meteo, images, heroOverlayOpacity, heroAlignment, customSections, leads, visits, notificationEmail, adminPassword, callButtonConfig,
+    updateTranslation, updatePack, addPack, deletePack, updateMobileRate, addMobileRate, deleteMobileRate, updatePromotion, updateMeteo, updateImage, updateHeroOpacity, updateHeroAlignment, addCustomSection, deleteCustomSection, updateLeadStatus, deleteLead, updateNotificationEmail, updateAdminPassword, updateCallButtonConfig, resetToDefaults, importData, saveContent
   } = useContent();
 
   // --- AUTH STATE ---
@@ -75,6 +76,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   // Password change state
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  const currentCallButtonConfig = callButtonConfig || CALL_BUTTON_DEFAULT;
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -263,7 +266,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
 
   const handleExport = () => {
       const dataToExport: AppContent = {
-          translations, packs, fiberRates: [], mobileRates, promotions, meteo, images, heroOverlayOpacity, heroAlignment, customSections, leads, visits, notificationEmail, adminPassword
+          translations, packs, fiberRates: [], mobileRates, promotions, meteo, images, heroOverlayOpacity, heroAlignment, customSections, leads, visits, notificationEmail, adminPassword, callButtonConfig
       };
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToExport, null, 2));
       const downloadAnchorNode = document.createElement('a');
@@ -557,6 +560,76 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                                 )}
                             </div>
                         </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                            <Move size={20} className="text-brand-purple" /> Botó Flotant de Trucada
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Posició (Costat)</label>
+                                <div className="flex gap-2">
+                                    <button 
+                                        onClick={() => updateCallButtonConfig({ ...currentCallButtonConfig, side: 'left' })}
+                                        className={`flex-1 py-2 px-3 rounded-lg font-bold border ${currentCallButtonConfig.side === 'left' ? 'bg-brand-purple text-white border-brand-purple' : 'bg-gray-50 text-gray-600'}`}
+                                    >
+                                        Esquerra
+                                    </button>
+                                    <button 
+                                        onClick={() => updateCallButtonConfig({ ...currentCallButtonConfig, side: 'right' })}
+                                        className={`flex-1 py-2 px-3 rounded-lg font-bold border ${currentCallButtonConfig.side === 'right' ? 'bg-brand-purple text-white border-brand-purple' : 'bg-gray-50 text-gray-600'}`}
+                                    >
+                                        Dreta
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Altura Desktop (px des de dalt)</label>
+                                <input 
+                                    type="number" 
+                                    value={currentCallButtonConfig.desktopTop}
+                                    onChange={(e) => updateCallButtonConfig({ ...currentCallButtonConfig, desktopTop: parseInt(e.target.value) })}
+                                    className="w-full p-2 border rounded-lg"
+                                />
+                                <span className="text-xs text-gray-400">Ex: 160</span>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Altura Mòbil (px des de dalt)</label>
+                                <input 
+                                    type="number" 
+                                    value={currentCallButtonConfig.mobileTop}
+                                    onChange={(e) => updateCallButtonConfig({ ...currentCallButtonConfig, mobileTop: parseInt(e.target.value) })}
+                                    className="w-full p-2 border rounded-lg"
+                                />
+                                <span className="text-xs text-gray-400">Ex: 128</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                            <Lock size={18} /> Canviar Contrasenya d'Administrador
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <input 
+                                type="password" 
+                                placeholder="Nova contrasenya" 
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                className="p-2 border rounded"
+                            />
+                            <input 
+                                type="password" 
+                                placeholder="Confirmar contrasenya" 
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                className="p-2 border rounded"
+                            />
+                        </div>
+                        <button onClick={handleChangePassword} className="bg-brand-purple hover:bg-brand-pink text-white px-4 py-2 rounded font-bold text-sm transition-colors">
+                            Actualitzar Contrasenya
+                        </button>
                     </div>
                 </div>
             )}
@@ -1181,31 +1254,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                                  <input type="file" className="hidden" accept=".json" onChange={handleImport} />
                              </label>
                         </div>
-
-                        <hr className="my-8" />
-                        
-                        <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                            <Lock size={18} /> Canviar Contrasenya d'Administrador
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <input 
-                                type="password" 
-                                placeholder="Nova contrasenya" 
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                                className="p-2 border rounded"
-                            />
-                            <input 
-                                type="password" 
-                                placeholder="Confirmar contrasenya" 
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                className="p-2 border rounded"
-                            />
-                        </div>
-                        <button onClick={handleChangePassword} className="bg-brand-purple text-white px-4 py-2 rounded font-bold text-sm">
-                            Actualitzar Contrasenya
-                        </button>
+                         
+                         {/* --- PASSWORD WAS MOVED TO GENERAL TAB, BUT KEPT HERE FOR LEGACY ACCESS IF NEEDED, OR REMOVE IF DUPLICATE IS CONFUSING --- */}
+                         {/* Removing duplicate for clarity, as it is now in General */}
 
                          <hr className="my-8" />
                         

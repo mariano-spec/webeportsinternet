@@ -1,7 +1,8 @@
 
+
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { AppContent, ContentContextType, Language, Translation, Pack, CustomSection, Lead, MobileRate, Promotion, MeteoConfig } from '../types';
-import { TRANSLATIONS, PACKS, FIBER_RATES, MOBILE_RATES, IMAGES, CUSTOM_SECTIONS, PROMOTIONS, METEO_DEFAULT, INITIAL_VISITS } from '../constants';
+import { AppContent, ContentContextType, Language, Translation, Pack, CustomSection, Lead, MobileRate, Promotion, MeteoConfig, CallButtonConfig } from '../types';
+import { TRANSLATIONS, PACKS, FIBER_RATES, MOBILE_RATES, IMAGES, CUSTOM_SECTIONS, PROMOTIONS, METEO_DEFAULT, INITIAL_VISITS, CALL_BUTTON_DEFAULT } from '../constants';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 const INITIAL_CONTENT: AppContent = {
@@ -19,7 +20,8 @@ const INITIAL_CONTENT: AppContent = {
   visits: INITIAL_VISITS,
   notificationEmail: "",
   // Use env var if available, otherwise default to 'admin123'
-  adminPassword: process.env.VITE_ADMIN_PASSWORD || "admin123"
+  adminPassword: process.env.VITE_ADMIN_PASSWORD || "admin123",
+  callButtonConfig: CALL_BUTTON_DEFAULT
 };
 
 const ContentContext = createContext<ContentContextType | undefined>(undefined);
@@ -59,6 +61,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 // Specific merges for arrays to ensure we don't lose structure
                 meteo: dbContent.meteo || INITIAL_CONTENT.meteo,
                 promotions: dbContent.promotions || INITIAL_CONTENT.promotions,
+                callButtonConfig: dbContent.callButtonConfig || INITIAL_CONTENT.callButtonConfig,
                 // Respect DB password if set, otherwise fallback to env/default
                 adminPassword: dbContent.adminPassword || INITIAL_CONTENT.adminPassword
             };
@@ -294,6 +297,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const updateNotificationEmail = (email: string) => setContent(prev => ({ ...prev, notificationEmail: email }));
   const updateAdminPassword = (password: string) => setContent(prev => ({ ...prev, adminPassword: password }));
+  const updateCallButtonConfig = (config: CallButtonConfig) => setContent(prev => ({ ...prev, callButtonConfig: config }));
 
   const resetToDefaults = () => {
     if(window.confirm("ATENCIÓ: Això esborrarà TOTA la base de dades i restaurarà la web original. Continuar?")) {
@@ -338,6 +342,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
       deleteLead,
       updateNotificationEmail,
       updateAdminPassword,
+      updateCallButtonConfig,
       resetToDefaults,
       importData
     }}>

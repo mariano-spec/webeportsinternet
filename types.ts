@@ -106,6 +106,12 @@ export interface VisitStats {
   count: number;
 }
 
+export interface CallButtonConfig {
+  side: 'left' | 'right';
+  desktopTop: number; // pixels from top
+  mobileTop: number; // pixels from top
+}
+
 export interface Translation {
   nav: {
     home: string;
@@ -192,6 +198,7 @@ export interface AppContent {
   visits: VisitStats[]; // New analytics data
   notificationEmail?: string;
   adminPassword?: string;
+  callButtonConfig: CallButtonConfig;
 }
 
 export interface ContentContextType extends AppContent {
@@ -216,6 +223,7 @@ export interface ContentContextType extends AppContent {
   deleteLead: (id: string) => void;
   updateNotificationEmail: (email: string) => void;
   updateAdminPassword: (password: string) => void;
+  updateCallButtonConfig: (config: CallButtonConfig) => void;
   resetToDefaults: () => void;
   importData: (data: AppContent) => void;
 }

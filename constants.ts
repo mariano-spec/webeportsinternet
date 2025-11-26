@@ -1,6 +1,6 @@
 
 
-import { Translation, MobileRate, FiberRate, Pack, CustomSection, Promotion, AppContent, MeteoConfig, VisitStats } from './types';
+import { Translation, MobileRate, FiberRate, Pack, CustomSection, Promotion, AppContent, MeteoConfig, VisitStats, CallButtonConfig } from './types';
 
 export const TRANSLATIONS: Record<string, Translation> = {
   "ca": {
@@ -460,6 +460,12 @@ export const INITIAL_VISITS: VisitStats[] = [
   { week: 'S 43', source: 'organic', count: 130 },
   { week: 'S 43', source: 'ads', count: 80 },
 ];
+
+export const CALL_BUTTON_DEFAULT: CallButtonConfig = {
+    side: 'left',
+    desktopTop: 160,
+    mobileTop: 128
+};
 
 export const CUSTOM_SECTIONS: CustomSection[] = [];
 
