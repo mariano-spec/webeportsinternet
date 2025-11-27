@@ -3,8 +3,10 @@
 import React, { useState } from 'react';
 import { useContent } from '../contexts/ContentContext';
 import { Language, Pack, CustomSection, Lead, Feature, Testimonial, FAQItem, AppContent, CameraItem, MobileRate, CallButtonConfig } from '../types';
-import { X, Upload, Save, Trash2, Plus, Layout, Smartphone, Wifi, Image as ImageIcon, RefreshCw, Users, Lock, Star, HelpCircle, Zap, Database, Download, AlertTriangle, Grid, Megaphone, Camera, ExternalLink, Eye, EyeOff, BarChart2, MapPin, Phone, Mail, Bell, Check, Move } from 'lucide-react';
+import { X, Upload, Save, Trash2, Plus, Layout, Smartphone, Wifi, Image as ImageIcon, RefreshCw, Users, Lock, Star, HelpCircle, Zap, Database, Download, AlertTriangle, Grid, Megaphone, Camera, ExternalLink, Eye, EyeOff, BarChart2, MapPin, Phone, Mail, Bell, Check, Move, LogOut } from 'lucide-react';
 import { IMAGES, CALL_BUTTON_DEFAULT } from '../constants';
+import { AdminLogin } from './AdminLogin';
+import { logoutAdmin } from '../supabaseAuth';
 
 interface AdminDashboardProps {
   onClose: () => void;
@@ -65,29 +67,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
 
   // --- AUTH STATE ---
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [passwordInput, setPasswordInput] = useState('');
-  const [authError, setAuthError] = useState(false);
 
   // --- DASHBOARD STATE ---
   const [activeTab, setActiveTab] = useState<'general' | 'hero' | 'products' | 'mobile' | 'promotions' | 'features' | 'testimonials' | 'faq' | 'configurator' | 'footer' | 'sections' | 'leads' | 'data' | 'meteo' | 'analytics'>('general');
   const [editingLang, setEditingLang] = useState<Language>('ca');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  
-  // Password change state
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
 
   const currentCallButtonConfig = callButtonConfig || CALL_BUTTON_DEFAULT;
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    const currentPassword = adminPassword || 'admin123';
-    if (passwordInput === currentPassword) {
-        setIsAuthenticated(true);
-        setAuthError(false);
-    } else {
-        setAuthError(true);
-    }
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = async () => {
+    await logoutAdmin();
+    setIsAuthenticated(false);
+    onClose();
   };
 
   const handleSave = async () => {
@@ -249,21 +244,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
       updateTranslation(editingLang, 'faq', 'items', currentItems);
   };
   
-  const handleChangePassword = () => {
-    if (newPassword.length < 4) {
-        alert("La contrasenya ha de tenir almenys 4 caràcters.");
-        return;
-    }
-    if (newPassword !== confirmPassword) {
-        alert("Les contrasenyes no coincideixen.");
-        return;
-    }
-    updateAdminPassword(newPassword);
-    setNewPassword('');
-    setConfirmPassword('');
-    alert("Contrasenya actualitzada. Recorda clicar 'Desar Canvis' per guardar-la al servidor.");
-  };
-
   const handleExport = () => {
       const dataToExport: AppContent = {
           translations, packs, fiberRates: [], mobileRates, promotions, meteo, images, heroOverlayOpacity, heroAlignment, customSections, leads, visits, notificationEmail, adminPassword, callButtonConfig
@@ -340,37 +320,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   };
 
   if (!isAuthenticated) {
-    return (
-        <div className="fixed inset-0 z-[100] bg-gray-900/90 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative animate-fade-in-up">
-                <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
-                    <X size={24} />
-                </button>
-                <div className="p-8 text-center">
-                    <div className="bg-brand-pink/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-brand-pink">
-                        <Lock size={32} />
-                    </div>
-                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Accés Administrador</h2>
-                    <p className="text-gray-500 mb-6">Introdueix la contrasenya.</p>
-                    <form onSubmit={handleLogin} className="space-y-4">
-                        <div>
-                            <input 
-                                type="password" 
-                                autoFocus
-                                value={passwordInput}
-                                onChange={(e) => setPasswordInput(e.target.value)}
-                                placeholder="Contrasenya..."
-                                className={`w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-brand-pink transition-all ${authError ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
-                            />
-                        </div>
-                        <button type="submit" className="w-full bg-brand-purple hover:bg-brand-pink text-white font-bold py-3 rounded-xl transition-colors">
-                            Entrar
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    );
+    return <AdminLogin onLoginSuccess={handleLoginSuccess} />;
   }
 
   return (
@@ -404,6 +354,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                 {saveStatus === 'idle' && 'Desar Canvis'}
             </button>
             <div className="w-px h-6 bg-white/20 mx-2"></div>
+            <button 
+              onClick={handleLogout}
+              className="bg-white/10 hover:bg-red-500 p-2 rounded-full transition-colors" 
+              title="Logout"
+            >
+              <LogOut size={20} />
+            </button>
             <button onClick={onClose} className="bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors ml-2">
                 <X size={20} />
             </button>
@@ -607,30 +564,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                         </div>
                     </div>
 
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                            <Lock size={18} /> Canviar Contrasenya d'Administrador
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <input 
-                                type="password" 
-                                placeholder="Nova contrasenya" 
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                                className="p-2 border rounded"
-                            />
-                            <input 
-                                type="password" 
-                                placeholder="Confirmar contrasenya" 
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                className="p-2 border rounded"
-                            />
-                        </div>
-                        <button onClick={handleChangePassword} className="bg-brand-purple hover:bg-brand-pink text-white px-4 py-2 rounded font-bold text-sm transition-colors">
-                            Actualitzar Contrasenya
-                        </button>
-                    </div>
                 </div>
             )}
             
