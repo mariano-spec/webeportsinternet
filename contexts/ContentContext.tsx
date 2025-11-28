@@ -1,9 +1,7 @@
 
-
-
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { AppContent, ContentContextType, Language, Translation, Pack, CustomSection, Lead, MobileRate, Promotion, MeteoConfig, CallButtonConfig, StoreItem, FiberRate } from '../types';
-import { TRANSLATIONS, PACKS, FIBER_RATES, MOBILE_RATES, IMAGES, CUSTOM_SECTIONS, PROMOTIONS, METEO_DEFAULT, INITIAL_VISITS, CALL_BUTTON_DEFAULT, STORES } from '../constants';
+import { AppContent, ContentContextType, Language, Translation, Pack, CustomSection, Lead, MobileRate, Promotion, MeteoConfig, CallButtonConfig } from '../types';
+import { TRANSLATIONS, PACKS, FIBER_RATES, MOBILE_RATES, IMAGES, CUSTOM_SECTIONS, PROMOTIONS, METEO_DEFAULT, INITIAL_VISITS, CALL_BUTTON_DEFAULT } from '../constants';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 const INITIAL_CONTENT: AppContent = {
@@ -11,7 +9,6 @@ const INITIAL_CONTENT: AppContent = {
   packs: PACKS,
   fiberRates: FIBER_RATES,
   mobileRates: MOBILE_RATES,
-  stores: STORES,
   promotions: PROMOTIONS,
   meteo: METEO_DEFAULT,
   images: IMAGES,
@@ -21,7 +18,8 @@ const INITIAL_CONTENT: AppContent = {
   leads: [],
   visits: INITIAL_VISITS,
   notificationEmail: "",
-  adminPassword: process.env.ADMIN_PASSWORD || "admin123",
+  // Use env var if available, otherwise default to 'admin123'
+  adminPassword: process.env.VITE_ADMIN_PASSWORD || "admin123",
   callButtonConfig: CALL_BUTTON_DEFAULT
 };
 
@@ -66,15 +64,13 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 meteo: dbContent.meteo || INITIAL_CONTENT.meteo,
                 promotions: dbContent.promotions || INITIAL_CONTENT.promotions,
                 callButtonConfig: dbContent.callButtonConfig || INITIAL_CONTENT.callButtonConfig,
-                adminPassword: dbContent.adminPassword || INITIAL_CONTENT.adminPassword,
-                stores: dbContent.stores || INITIAL_CONTENT.stores,
-                fiberRates: dbContent.fiberRates || INITIAL_CONTENT.fiberRates
+                adminPassword: dbContent.adminPassword || INITIAL_CONTENT.adminPassword
             };
         }
 
         // 2. Merge Leads (from SQL table, ignoring JSON leads if any)
         if (leadsRes.data) {
-            // Map SQL columns to TS interface if needed
+            // Map SQL columns to TS interface if needed (snake_case to camelCase handled mostly automatically or manually below)
             const sqlLeads: Lead[] = leadsRes.data.map((l: any) => ({
                 id: l.id,
                 createdAt: l.created_at,
@@ -149,6 +145,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         });
 
         // UPSERT into 'visits' table
+        // We first need to check if it exists because 'count' needs to be incremented
         const { data: existing } = await supabase
             .from('visits')
             .select('id, count')
@@ -163,6 +160,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
         
         sessionStorage.setItem(sessionKey, 'true');
+        console.log(`Visit tracked: ${source}`);
 
       } catch (err) {
         console.error("Error tracking visit:", err);
@@ -185,6 +183,8 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
        const contentToSave = { ...content };
        
        // CRITICAL: Remove Leads and Visits from the JSON blob.
+       // These are now handled by their own SQL tables.
+       // We don't want to overwrite them or store stale data in site_content.
        delete (contentToSave as any).leads;
        delete (contentToSave as any).visits;
 
@@ -213,6 +213,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
               setContent(prev => ({ 
                   ...prev, 
                   ...newContent,
+                  // Preserve local data that shouldn't be overwritten by config updates if config doesn't have them
                   leads: prev.leads, 
                   visits: prev.visits 
               }));
@@ -238,6 +239,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
               status: newLead.status
           };
 
+          // Play Sound
           try {
              const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); 
              audio.play().catch(e => console.log('Audio autoplay blocked'));
@@ -257,6 +259,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   // --- HELPERS ---
+  
   const updateTranslation = (lang: Language, section: keyof Translation, key: string, value: any) => {
     setContent(prev => ({
       ...prev,
@@ -281,18 +284,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const addMobileRate = (rate: MobileRate) => setContent(prev => ({ ...prev, mobileRates: [...prev.mobileRates, rate] }));
   const deleteMobileRate = (id: string) => setContent(prev => ({ ...prev, mobileRates: prev.mobileRates.filter(r => r.id !== id) }));
 
-  const updateFiberRate = (rate: FiberRate) => setContent(prev => ({ ...prev, fiberRates: prev.fiberRates.map(r => r.id === rate.id ? rate : r) }));
-  const addFiberRate = (rate: FiberRate) => setContent(prev => ({ ...prev, fiberRates: [...prev.fiberRates, rate] }));
-  const deleteFiberRate = (id: string) => setContent(prev => ({ ...prev, fiberRates: prev.fiberRates.filter(r => r.id !== id) }));
-
-  const updateStore = (store: StoreItem) => setContent(prev => ({ ...prev, stores: prev.stores.map(s => s.id === store.id ? store : s) }));
-  const addStore = (store: StoreItem) => setContent(prev => ({ ...prev, stores: [...prev.stores, store] }));
-  const deleteStore = (id: string) => setContent(prev => ({ ...prev, stores: prev.stores.filter(s => s.id !== id) }));
-
   const updatePromotion = (promotion: Promotion) => setContent(prev => ({ ...prev, promotions: prev.promotions.map(p => p.id === promotion.id ? promotion : p) }));
-  const addPromotion = (promotion: Promotion) => setContent(prev => ({ ...prev, promotions: [...prev.promotions, promotion] }));
-  const deletePromotion = (id: string) => setContent(prev => ({ ...prev, promotions: prev.promotions.filter(p => p.id !== id) }));
-
   const updateMeteo = (config: MeteoConfig) => setContent(prev => ({ ...prev, meteo: config }));
   
   const updateImage = (key: 'logo' | 'heroBg' | 'footerLogo', base64: string) => setContent(prev => ({ ...prev, images: { ...prev.images, [key]: base64 } }));
@@ -317,6 +309,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
       total_price: leadData.totalPrice
     };
 
+    // Optimistic UI update
     const uiLead: Lead = {
         ...leadData,
         id: newLead.id,
@@ -331,6 +324,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const updateLeadStatus = async (id: string, status: Lead['status']) => {
+      // Optimistic
       setContent(prev => ({ ...prev, leads: prev.leads.map(lead => lead.id === id ? { ...lead, status } : lead) }));
       
       if (isSupabaseConfigured) {
@@ -339,6 +333,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const deleteLead = async (id: string) => {
+      // Optimistic
       setContent(prev => ({ ...prev, leads: prev.leads.filter(lead => lead.id !== id) }));
       
       if (isSupabaseConfigured) {
@@ -354,6 +349,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if(window.confirm("ATENCIÓ: Això esborrarà TOTA la configuració. Continuar?")) {
         setContent(INITIAL_CONTENT);
         if (isSupabaseConfigured) {
+            // Only reset content, don't delete leads history!
             saveContent(); 
         }
     }
@@ -379,15 +375,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
       updateMobileRate,
       addMobileRate,
       deleteMobileRate,
-      updateFiberRate,
-      addFiberRate,
-      deleteFiberRate,
-      updateStore,
-      addStore,
-      deleteStore,
       updatePromotion,
-      addPromotion,
-      deletePromotion,
       updateMeteo,
       updateImage,
       updateHeroOpacity,
