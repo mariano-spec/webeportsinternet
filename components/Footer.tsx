@@ -3,7 +3,7 @@ import React from 'react';
 import { Logo } from './Logo';
 import { Language } from '../types';
 import { useContent } from '../contexts/ContentContext';
-import { MapPin, Phone, Mail, Lock } from 'lucide-react';
+import { MapPin, Phone, Mail, Lock, Instagram, Facebook, Linkedin } from 'lucide-react';
 
 export const Footer: React.FC<{ lang: Language; onOpenAdmin?: () => void }> = ({ lang, onOpenAdmin }) => {
   const { translations, images } = useContent();
@@ -63,14 +63,27 @@ export const Footer: React.FC<{ lang: Language; onOpenAdmin?: () => void }> = ({
           </div>
         </div>
         
-        <div className="max-w-5xl mx-auto border-t border-gray-800 pt-8 flex justify-between items-center text-xs text-gray-500">
+        <div className="max-w-5xl mx-auto border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500 gap-4">
           <span>&copy; {new Date().getFullYear()} eportsinternet. All rights reserved.</span>
+          
+          <div className="flex items-center gap-6">
+             <a href="https://instagram.com/eportsinternet" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="Instagram">
+                <Instagram size={24} strokeWidth={1.5} />
+             </a>
+             <a href="https://facebook.com/eportsinternet" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="Facebook">
+                <Facebook size={24} fill="currentColor" strokeWidth={0} />
+             </a>
+             <a href="https://linkedin.com/company/eportsinternet" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="LinkedIn">
+                <Linkedin size={24} fill="currentColor" strokeWidth={0} />
+             </a>
+          </div>
+
           <button 
             onClick={onOpenAdmin} 
-            className="text-gray-500 hover:text-white transition-colors p-2 rounded-full hover:bg-gray-800" 
+            className="text-gray-600 hover:text-white transition-colors p-2 rounded-full hover:bg-gray-800" 
             title="Accés Admin"
           >
-            <Lock size={16} />
+            <Lock size={14} />
           </button>
         </div>
       </div>
