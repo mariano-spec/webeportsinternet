@@ -1,7 +1,7 @@
 
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Language, ProductType, FiberRate, MobileRate, Pack } from '../types';
+import { Language, FiberRate, MobileRate, Pack } from '../types';
 import { useContent } from '../contexts/ContentContext';
 import { Smartphone, Check, Plus, Trash2, Wifi, Award, Calculator, ArrowRight, AlertCircle, TrendingUp, Zap } from 'lucide-react';
 import { LeadFormModal } from './LeadFormModal';
@@ -62,9 +62,11 @@ export const Configurator: React.FC<ConfiguratorProps> = ({ lang }) => {
 
   // Add a mobile line
   const addLine = () => {
+    // Default to the first available rate or 50GB
+    const defaultRate = mobileRates[1] || mobileRates[0];
     setSelection(prev => ({
       ...prev,
-      mobileLines: [...prev.mobileLines, { gb: 50 }] // Default to 50GB
+      mobileLines: [...prev.mobileLines, { gb: defaultRate ? defaultRate.gb : 50 }]
     }));
   };
 
@@ -197,11 +199,6 @@ export const Configurator: React.FC<ConfiguratorProps> = ({ lang }) => {
 
   if (!selectedFiber) return null;
 
-  // available GB steps for slider based on mobileRates
-  const gbSteps: number[] = Array.from<number>(new Set(mobileRates.filter(r => r.gb > 0).map(r => r.gb))).sort((a, b) => a - b);
-  if(mobileRates.some(r => r.gb === -1)) gbSteps.push(-1);
-  if(gbSteps.length === 0) gbSteps.push(10, 50, 100);
-
   return (
     <section id="configurator" className="py-20 bg-brand-light/50">
       <LeadFormModal 
@@ -274,27 +271,23 @@ export const Configurator: React.FC<ConfiguratorProps> = ({ lang }) => {
                     <div className="bg-brand-purple text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0">
                       {idx + 1}
                     </div>
+                    
+                    {/* Changed from Slider to Select for better Mobile UX */}
                     <div className="flex-grow">
-                        <input 
-                          type="range" 
-                          min="0" 
-                          max={gbSteps.length - 1} 
-                          step="1"
-                          value={gbSteps.indexOf(line.gb) === -1 ? 1 : gbSteps.indexOf(line.gb)}
-                          onChange={(e) => {
-                            const val = parseInt(e.target.value);
-                            updateLineGb(idx, gbSteps[val]);
-                          }}
-                          className="w-full accent-brand-pink h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                        />
-                        <div className="flex justify-between text-xs font-medium text-gray-500 mt-1 px-1">
-                            {gbSteps.map(g => <span key={g}>{g === -1 ? 'Inf' : `${g}GB`}</span>)}
-                        </div>
+                        <select 
+                            value={line.gb} 
+                            onChange={(e) => updateLineGb(idx, parseInt(e.target.value))}
+                            className="w-full p-2 bg-white border border-gray-300 rounded-lg text-gray-800 font-medium focus:ring-2 focus:ring-brand-purple focus:border-transparent outline-none"
+                        >
+                            {mobileRates.filter(r => r.price > 0).map(r => (
+                                <option key={r.id} value={r.gb}>
+                                    {r.gb === -1 ? 'Il·limitat' : `${r.gb} GB`} (+{r.price.toFixed(2)}€)
+                                </option>
+                            ))}
+                        </select>
                     </div>
-                    <div className="w-24 text-right font-bold text-brand-purple">
-                      {line.gb === -1 ? 'Inf' : line.gb} GB
-                    </div>
-                    <button onClick={() => removeLine(idx)} className="text-gray-400 hover:text-red-500">
+
+                    <button onClick={() => removeLine(idx)} className="text-gray-400 hover:text-red-500 p-2">
                       <Trash2 size={18} />
                     </button>
                   </div>
