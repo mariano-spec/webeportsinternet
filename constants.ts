@@ -1,7 +1,6 @@
 
 
-
-import { Translation, MobileRate, FiberRate, Pack, CustomSection, Promotion, AppContent, MeteoConfig, VisitStats, CallButtonConfig, StoreItem } from './types';
+import { Translation, MobileRate, FiberRate, Pack, CustomSection, Promotion, AppContent, MeteoConfig, VisitStats, CallButtonConfig } from './types';
 
 export const TRANSLATIONS: Record<string, Translation> = {
   "ca": {
@@ -97,7 +96,7 @@ export const TRANSLATIONS: Record<string, Translation> = {
       "monthly": "al mes",
       "saving": "Estàs estalviant amb aquest paquet!",
       "noMobile": "Sense línies mòbils addicionals",
-      "selectSpeed": "Selecciona velocidad",
+      "selectSpeed": "Selecciona velocitat",
       "unlimited": "Il·limitades",
       "summary": "Resum de la teva configuració",
       "contactToHire": "Contractar ara"
@@ -384,57 +383,6 @@ export const MOBILE_RATES: MobileRate[] = [
   }
 ];
 
-export const STORES: StoreItem[] = [
-    {
-        id: 's1',
-        name: 'Sede Central Tortosa',
-        address: "Ctra Tortosa a l'Aldea km 2,4",
-        url: 'https://maps.google.com/?q=Ctra+Tortosa+a+l\'Aldea+km+2,4'
-    },
-    {
-        id: 's2',
-        name: 'Tortosa Centre',
-        address: "Plaça Alfons XII, 7. Baixos",
-        url: 'https://maps.google.com/?q=Plaça+Alfons+XII,+7,+Tortosa'
-    },
-    {
-        id: 's3',
-        name: "L'Ametlla de Mar",
-        address: "C. Sant Joan, 31",
-        url: 'https://maps.google.com/?q=C.+Sant+Joan,+31,+L\'Ametlla+de+Mar'
-    },
-    {
-        id: 's4',
-        name: "Móra d'Ebre",
-        address: "Av Comarques Catalanes, 9",
-        url: 'https://maps.google.com/?q=Av+Comarques+Catalanes,+9,+Mora+d\'Ebre'
-    },
-    {
-        id: 's5',
-        name: "Gandesa",
-        address: "Av. d'Aragó, 11",
-        url: 'https://maps.google.com/?q=Av.+d\'Aragó,+11,+Gandesa'
-    },
-    {
-        id: 's6',
-        name: "La Sénia",
-        address: "Passatge de l'Hort s/n",
-        url: 'https://maps.google.com/?q=Passatge+de+l\'Hort,+La+Sénia'
-    },
-    {
-        id: 's7',
-        name: "Camarles",
-        address: "C. Vint-i-set, 3",
-        url: 'https://maps.google.com/?q=C.+Vint-i-set,+3,+Camarles'
-    },
-    {
-        id: 's8',
-        name: "El Pont de Suert",
-        address: "Av. Victoriano Muñoz, 18",
-        url: 'https://maps.google.com/?q=Av.+Victoriano+Muñoz,+18,+El+Pont+de+Suert'
-    }
-];
-
 export const PROMOTIONS: Promotion[] = [
   {
     id: 'promo_default',
@@ -516,11 +464,7 @@ export const INITIAL_VISITS: VisitStats[] = [
 export const CALL_BUTTON_DEFAULT: CallButtonConfig = {
     side: 'left',
     desktopTop: 160,
-    mobileTop: 128,
-    text: {
-        ca: "Truca ara i canvia't a e-ports",
-        es: "Llama y cámbiate a e-ports"
-    }
+    mobileTop: 128
 };
 
 export const CUSTOM_SECTIONS: CustomSection[] = [];
