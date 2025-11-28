@@ -1,5 +1,6 @@
 
 
+
 import React from 'react';
 import { Phone } from 'lucide-react';
 import { Language } from '../types';
@@ -11,6 +12,9 @@ export const FloatingCallButton: React.FC<{ lang: Language }> = ({ lang }) => {
   const config = callButtonConfig || CALL_BUTTON_DEFAULT;
 
   const sideClass = config.side === 'right' ? 'right-4 md:right-6' : 'left-4 md:left-6';
+  
+  // Use text from config if available, otherwise fallback to default
+  const text = config.text ? config.text[lang] : (lang === 'ca' ? "Truca ara i canvia't a e-ports" : "Llama y cámbiate a e-ports");
 
   return (
     <>
@@ -34,7 +38,7 @@ export const FloatingCallButton: React.FC<{ lang: Language }> = ({ lang }) => {
         </div>
         <div className="flex flex-col">
           <span className="text-[10px] font-bold text-pink-50 uppercase tracking-wider leading-tight shadow-sm">
-              {lang === 'ca' ? "Truca ara i canvia't a e-ports" : "Llama y cámbiate a e-ports"}
+              {text}
           </span>
           <span className="font-black text-lg leading-none tracking-tight drop-shadow-sm">977 09 05 05</span>
         </div>

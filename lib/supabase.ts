@@ -1,7 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Access variables injected by Vite via define in vite.config.ts
-// We use empty string fallback to prevent "process is not defined" errors if logic fails
 const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || '';
 
@@ -17,7 +16,6 @@ if (!isSupabaseConfigured) {
 }
 
 // Initialize client with fallback to avoid runtime crashes if env vars are missing
-// The client object is created but we won't use it if !isSupabaseConfigured
 export const supabase = createClient(
   isSupabaseConfigured ? supabaseUrl : 'https://placeholder.supabase.co',
   isSupabaseConfigured ? supabaseAnonKey : 'placeholder'

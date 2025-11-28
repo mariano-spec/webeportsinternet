@@ -1,9 +1,10 @@
 
 
+
 import React, { useState } from 'react';
 import { useContent } from '../contexts/ContentContext';
-import { Language, Pack, CustomSection, Lead, Feature, Testimonial, FAQItem, AppContent, CameraItem, MobileRate, CallButtonConfig } from '../types';
-import { X, Upload, Save, Trash2, Plus, Layout, Smartphone, Wifi, Image as ImageIcon, RefreshCw, Users, Lock, Star, HelpCircle, Zap, Database, Download, AlertTriangle, Grid, Megaphone, Camera, ExternalLink, Eye, EyeOff, BarChart2, MapPin, Phone, Mail, Bell, Check, Move, LogOut } from 'lucide-react';
+import { Language, Pack, CustomSection, Lead, Feature, Testimonial, FAQItem, AppContent, CameraItem, MobileRate, CallButtonConfig, StoreItem, FiberRate, Promotion } from '../types';
+import { X, Upload, Save, Trash2, Plus, Layout, Smartphone, Wifi, Image as ImageIcon, RefreshCw, Users, Lock, Star, HelpCircle, Zap, Database, Download, AlertTriangle, Grid, Megaphone, Camera, ExternalLink, Eye, EyeOff, BarChart2, MapPin, Phone, Mail, Bell, Check, Move, LogOut, Store } from 'lucide-react';
 import { IMAGES, CALL_BUTTON_DEFAULT } from '../constants';
 import { AdminLogin } from './AdminLogin';
 import { logoutAdmin } from '../supabaseAuth';
@@ -61,15 +62,15 @@ const compressImage = (file: File): Promise<string> => {
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   const { 
-    translations, packs, mobileRates, promotions, meteo, images, heroOverlayOpacity, heroAlignment, customSections, leads, visits, notificationEmail, adminPassword, callButtonConfig,
-    updateTranslation, updatePack, addPack, deletePack, updateMobileRate, addMobileRate, deleteMobileRate, updatePromotion, updateMeteo, updateImage, updateHeroOpacity, updateHeroAlignment, addCustomSection, deleteCustomSection, updateLeadStatus, deleteLead, updateNotificationEmail, updateAdminPassword, updateCallButtonConfig, resetToDefaults, importData, saveContent
+    translations, packs, mobileRates, fiberRates, stores, promotions, meteo, images, heroOverlayOpacity, heroAlignment, customSections, leads, visits, notificationEmail, adminPassword, callButtonConfig,
+    updateTranslation, updatePack, addPack, deletePack, updateMobileRate, addMobileRate, deleteMobileRate, updateFiberRate, addFiberRate, deleteFiberRate, updateStore, addStore, deleteStore, updatePromotion, addPromotion, deletePromotion, updateMeteo, updateImage, updateHeroOpacity, updateHeroAlignment, addCustomSection, deleteCustomSection, updateLeadStatus, deleteLead, updateNotificationEmail, updateAdminPassword, updateCallButtonConfig, resetToDefaults, importData, saveContent
   } = useContent();
 
   // --- AUTH STATE ---
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // --- DASHBOARD STATE ---
-  const [activeTab, setActiveTab] = useState<'general' | 'hero' | 'products' | 'mobile' | 'promotions' | 'features' | 'testimonials' | 'faq' | 'configurator' | 'footer' | 'sections' | 'leads' | 'data' | 'meteo' | 'analytics'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'hero' | 'products' | 'mobile' | 'stores' | 'promotions' | 'features' | 'testimonials' | 'faq' | 'configurator' | 'footer' | 'sections' | 'leads' | 'data' | 'meteo' | 'analytics'>('general');
   const [editingLang, setEditingLang] = useState<Language>('ca');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
@@ -195,6 +196,39 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
     });
   };
 
+  const handleNewFiberRate = () => {
+      addFiberRate({
+          id: `f_${Date.now()}`,
+          name: 'Nova Fibra',
+          speedMb: 100,
+          technology: 'FIBER',
+          price: 24.90
+      });
+  };
+
+  const handleNewStore = () => {
+      addStore({
+          id: `s_${Date.now()}`,
+          name: 'Nova Botiga',
+          address: 'Adreça...',
+          url: ''
+      });
+  };
+  
+  const handleNewPromotion = () => {
+      const newPromo: Promotion = {
+          id: `pr_${Date.now()}`,
+          isActive: false,
+          title: { ca: 'Nova Promoció', es: 'Nueva Promoción' },
+          text: { ca: 'Text de la promoció...', es: 'Texto de la promoción...' },
+          startDate: new Date().toISOString(),
+          endDate: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString(),
+          backgroundColor: '#000000',
+          textColor: '#FFFFFF'
+      };
+      addPromotion(newPromo);
+  };
+
   const handleNewSection = () => {
     const newSection: CustomSection = {
         id: `sec${Date.now()}`,
@@ -246,7 +280,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   
   const handleExport = () => {
       const dataToExport: AppContent = {
-          translations, packs, fiberRates: [], mobileRates, promotions, meteo, images, heroOverlayOpacity, heroAlignment, customSections, leads, visits, notificationEmail, adminPassword, callButtonConfig
+          translations, packs, fiberRates, mobileRates, stores, promotions, meteo, images, heroOverlayOpacity, heroAlignment, customSections, leads, visits, notificationEmail, adminPassword, callButtonConfig
       };
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToExport, null, 2));
       const downloadAnchorNode = document.createElement('a');
@@ -378,6 +412,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                 <button onClick={() => setActiveTab('hero')} className={`w-full text-left px-4 py-3 rounded-lg font-medium flex items-center gap-3 ${activeTab === 'hero' ? 'bg-brand-pink text-white' : 'text-gray-600 hover:bg-gray-50'}`}>
                     <Layout size={18} /> Portada (Hero)
                 </button>
+                <button onClick={() => setActiveTab('stores')} className={`w-full text-left px-4 py-3 rounded-lg font-medium flex items-center gap-3 ${activeTab === 'stores' ? 'bg-brand-pink text-white' : 'text-gray-600 hover:bg-gray-50'}`}>
+                    <Store size={18} /> Botigues
+                </button>
                 <button onClick={() => setActiveTab('promotions')} className={`w-full text-left px-4 py-3 rounded-lg font-medium flex items-center gap-3 ${activeTab === 'promotions' ? 'bg-brand-pink text-white' : 'text-gray-600 hover:bg-gray-50'}`}>
                     <Megaphone size={18} /> Promocions
                 </button>
@@ -433,6 +470,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
              <button onClick={() => setActiveTab('general')} className={`whitespace-nowrap px-3 py-2 rounded-lg text-sm font-bold ${activeTab === 'general' ? 'bg-brand-pink text-white' : 'bg-gray-100'}`}>Logo</button>
              <button onClick={() => setActiveTab('hero')} className={`whitespace-nowrap px-3 py-2 rounded-lg text-sm font-bold ${activeTab === 'hero' ? 'bg-brand-pink text-white' : 'bg-gray-100'}`}>Portada</button>
              <button onClick={() => setActiveTab('products')} className={`whitespace-nowrap px-3 py-2 rounded-lg text-sm font-bold ${activeTab === 'products' ? 'bg-brand-pink text-white' : 'bg-gray-100'}`}>Paquets</button>
+             <button onClick={() => setActiveTab('stores')} className={`whitespace-nowrap px-3 py-2 rounded-lg text-sm font-bold ${activeTab === 'stores' ? 'bg-brand-pink text-white' : 'bg-gray-100'}`}>Botigues</button>
              <button onClick={() => setActiveTab('leads')} className={`whitespace-nowrap px-3 py-2 rounded-lg text-sm font-bold ${activeTab === 'leads' ? 'bg-brand-pink text-white' : 'bg-gray-100'}`}>Leads</button>
              <button onClick={() => setActiveTab('meteo')} className={`whitespace-nowrap px-3 py-2 rounded-lg text-sm font-bold ${activeTab === 'meteo' ? 'bg-brand-pink text-white' : 'bg-gray-100'}`}>Meteo</button>
         </div>
@@ -441,7 +479,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
         <div className="flex-1 overflow-y-auto p-4 md:p-8 mt-12 md:mt-0 pb-24">
             
             {/* Language Switcher */}
-            {['hero', 'features', 'testimonials', 'faq', 'sections', 'configurator', 'footer', 'promotions', 'meteo', 'products'].includes(activeTab) && (
+            {['hero', 'features', 'testimonials', 'faq', 'sections', 'configurator', 'footer', 'promotions', 'meteo', 'products', 'stores'].includes(activeTab) && (
                 <div className="flex gap-4 mb-6 bg-white p-2 rounded-xl w-fit shadow-sm border border-gray-100">
                     <button onClick={() => setEditingLang('ca')} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${editingLang === 'ca' ? 'bg-brand-pink text-white shadow-md' : 'text-gray-500 hover:bg-gray-100'}`}>Català</button>
                     <button onClick={() => setEditingLang('es')} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${editingLang === 'es' ? 'bg-brand-pink text-white shadow-md' : 'text-gray-500 hover:bg-gray-100'}`}>Español</button>
@@ -561,6 +599,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                                 />
                                 <span className="text-xs text-gray-400">Ex: 128</span>
                             </div>
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Text del Botó (Català)</label>
+                                <input 
+                                    type="text"
+                                    value={currentCallButtonConfig.text?.ca || "Truca ara i canvia't a e-ports"}
+                                    onChange={(e) => updateCallButtonConfig({ 
+                                        ...currentCallButtonConfig, 
+                                        text: { 
+                                            ...(currentCallButtonConfig.text || { ca: "", es: "" }), 
+                                            ca: e.target.value 
+                                        } 
+                                    })}
+                                    className="w-full p-2 border rounded-lg mb-2"
+                                />
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Text del Botó (Castellà)</label>
+                                <input 
+                                    type="text"
+                                    value={currentCallButtonConfig.text?.es || "Llama y cámbiate a e-ports"}
+                                    onChange={(e) => updateCallButtonConfig({ 
+                                        ...currentCallButtonConfig, 
+                                        text: { 
+                                            ...(currentCallButtonConfig.text || { ca: "", es: "" }), 
+                                            es: e.target.value 
+                                        } 
+                                    })}
+                                    className="w-full p-2 border rounded-lg"
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -656,13 +722,94 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                 </div>
             )}
 
+            {/* --- STORES TAB --- */}
+            {activeTab === 'stores' && (
+                <div className="space-y-8 max-w-4xl">
+                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <div className="flex justify-between items-center mb-6">
+                             <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2"><Store className="text-brand-purple"/> Botigues Físiques</h2>
+                             <button onClick={handleNewStore} className="bg-brand-pink text-white px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-brand-purple"><Plus size={16}/> Nova Botiga</button>
+                        </div>
+                        
+                        <div className="space-y-4">
+                             {stores.map((store) => (
+                                 <div key={store.id} className="bg-gray-50 border border-gray-200 p-4 rounded-xl flex items-center gap-4 relative">
+                                    <div className="bg-brand-light p-3 rounded-full text-brand-pink shrink-0">
+                                        <Store size={20} />
+                                    </div>
+                                    <div className="flex-grow space-y-2">
+                                        <input 
+                                            value={store.name} 
+                                            onChange={(e) => updateStore({ ...store, name: e.target.value })} 
+                                            className="w-full font-bold bg-white border border-gray-200 p-2 rounded focus:border-brand-pink outline-none" 
+                                            placeholder="Nom de la botiga"
+                                        />
+                                        <input 
+                                            value={store.address} 
+                                            onChange={(e) => updateStore({ ...store, address: e.target.value })} 
+                                            className="w-full text-sm bg-white border border-gray-200 p-2 rounded focus:border-brand-pink outline-none" 
+                                            placeholder="Adreça completa"
+                                        />
+                                        <div className="flex items-center gap-2">
+                                            <MapPin size={14} className="text-gray-400" />
+                                            <input 
+                                                value={store.url || ''} 
+                                                onChange={(e) => updateStore({ ...store, url: e.target.value })} 
+                                                className="w-full text-xs text-gray-500 bg-transparent border-b border-gray-200 focus:border-brand-pink outline-none" 
+                                                placeholder="URL Google Maps (Opcional)"
+                                            />
+                                        </div>
+                                    </div>
+                                    <button onClick={() => deleteStore(store.id)} className="text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-full">
+                                        <Trash2 size={18}/>
+                                    </button>
+                                 </div>
+                             ))}
+                         </div>
+                     </div>
+                </div>
+            )}
+
             {/* --- PRODUCTS TAB (PACKS) --- */}
             {activeTab === 'products' && (
                 <div className="space-y-8 max-w-5xl">
+                    
+                    {/* FIBER RATES (CONFIGURATOR STEP 1) */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                         <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2"><Zap className="text-brand-purple"/> Tarifes Fibra (Pas 1 Configurador)</h2>
+                            <button onClick={handleNewFiberRate} className="bg-brand-pink text-white px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-brand-purple"><Plus size={16}/> Afegir Opció</button>
+                         </div>
+                         <div className="space-y-4">
+                             {fiberRates.map((fiber) => (
+                                 <div key={fiber.id} className="flex items-center gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                                     <div className="bg-white p-2 rounded-lg font-bold w-16 text-center shadow-sm">
+                                         {fiber.speedMb} Mb
+                                     </div>
+                                     <div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-4">
+                                         <div>
+                                             <label className="text-xs text-gray-500 block">Nom</label>
+                                             <input value={fiber.name} onChange={(e) => updateFiberRate({ ...fiber, name: e.target.value })} className="w-full font-medium bg-transparent border-b border-gray-300 focus:border-brand-pink outline-none" />
+                                         </div>
+                                         <div>
+                                             <label className="text-xs text-gray-500 block">Preu (€)</label>
+                                             <input type="number" value={fiber.price} onChange={(e) => updateFiberRate({ ...fiber, price: parseFloat(e.target.value) })} className="w-full font-bold text-brand-purple bg-transparent border-b border-gray-300 focus:border-brand-pink outline-none" />
+                                         </div>
+                                         <div className="hidden md:block">
+                                             <label className="text-xs text-gray-500 block">Velocitat (Mb)</label>
+                                             <input type="number" value={fiber.speedMb} onChange={(e) => updateFiberRate({ ...fiber, speedMb: parseInt(e.target.value) })} className="w-full font-medium bg-transparent border-b border-gray-300 focus:border-brand-pink outline-none" />
+                                         </div>
+                                     </div>
+                                     <button onClick={() => deleteFiberRate(fiber.id)} className="text-red-400 hover:text-red-600 p-2"><Trash2 size={18}/></button>
+                                 </div>
+                             ))}
+                         </div>
+                    </div>
+
                     {/* PACKS EDITOR */}
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                          <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2"><Wifi className="text-brand-purple"/> Paquets Fibra + Mòbil</h2>
+                            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2"><Wifi className="text-brand-purple"/> Paquets Predefinits</h2>
                             <button onClick={handleNewPack} className="bg-brand-pink text-white px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-brand-purple"><Plus size={16}/> Afegir Paquet</button>
                          </div>
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -756,14 +903,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
             {activeTab === 'promotions' && (
                 <div className="space-y-8 max-w-4xl">
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2"><Megaphone className="text-brand-purple" /> Banner Superior</h2>
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2"><Megaphone className="text-brand-purple" /> Banner Superior</h2>
+                            <button onClick={handleNewPromotion} className="bg-brand-pink text-white px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-brand-purple"><Plus size={16}/> Nova Promoció</button>
+                        </div>
                         {promotions.map((promo, idx) => (
-                            <div key={promo.id} className="space-y-6">
-                                <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-lg">
+                            <div key={promo.id} className="space-y-6 border-b border-gray-200 pb-8 mb-8 last:border-0 last:pb-0 last:mb-0">
+                                <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
                                     <label className="flex items-center gap-2 font-bold cursor-pointer">
                                         <input type="checkbox" checked={promo.isActive} onChange={(e) => updatePromotion({ ...promo, isActive: e.target.checked })} className="w-5 h-5 accent-brand-pink" />
                                         Activar Promoció
                                     </label>
+                                    <button onClick={() => deletePromotion(promo.id)} className="text-red-400 hover:text-red-600 text-sm flex items-center gap-1 hover:bg-red-50 p-2 rounded">
+                                        <Trash2 size={16} /> Eliminar
+                                    </button>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
@@ -1188,9 +1341,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                              </label>
                         </div>
                          
-                         {/* --- PASSWORD WAS MOVED TO GENERAL TAB, BUT KEPT HERE FOR LEGACY ACCESS IF NEEDED, OR REMOVE IF DUPLICATE IS CONFUSING --- */}
-                         {/* Removing duplicate for clarity, as it is now in General */}
-
                          <hr className="my-8" />
                         
                         <div className="bg-red-50 border border-red-200 p-4 rounded-xl">

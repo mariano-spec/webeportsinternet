@@ -15,6 +15,7 @@ import { DynamicSection } from './components/DynamicSection';
 import { PromotionBanner } from './components/PromotionBanner';
 import { LiveCameras } from './components/LiveCameras';
 import { FloatingCallButton } from './components/FloatingCallButton';
+import { Stores } from './components/Stores';
 import { ContentProvider, useContent } from './contexts/ContentContext';
 import { Language } from './types';
 import { Loader2 } from 'lucide-react';
@@ -28,11 +29,12 @@ const AppContent: React.FC = () => {
   if (isLoading) {
     return (
       <div className="fixed inset-0 bg-white z-[9999] flex flex-col items-center justify-center animate-fade-in">
-         <div className="w-32 mb-8 animate-pulse">
-            <Logo className="w-full h-auto" />
+         <div className="text-4xl md:text-5xl font-black tracking-tighter mb-8 animate-pulse flex items-center justify-center">
+            <span className="text-brand-pink">Eports</span>
+            <span className="text-brand-purple">Internet</span>
          </div>
          <Loader2 className="w-10 h-10 text-brand-pink animate-spin" />
-         <p className="mt-4 text-gray-400 font-medium text-sm tracking-widest uppercase">Carregant e-ports...</p>
+         <p className="mt-4 text-gray-400 font-medium text-sm tracking-widest uppercase">Carregant...</p>
       </div>
     );
   }
@@ -58,6 +60,7 @@ const AppContent: React.FC = () => {
 
         <Testimonials lang={lang} />
         <FAQ lang={lang} />
+        <Stores lang={lang} />
         <LiveCameras lang={lang} />
       </main>
       
