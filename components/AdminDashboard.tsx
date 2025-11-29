@@ -1,6 +1,3 @@
-
-
-
 import React, { useState } from 'react';
 import { useContent } from '../contexts/ContentContext';
 import { Language, Pack, CustomSection, Lead, Feature, Testimonial, FAQItem, AppContent, CameraItem, MobileRate, CallButtonConfig, StoreItem, FiberRate, Promotion } from '../types';
@@ -86,19 +83,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   // 🆕 Funció per carregar visits de Supabase
   const loadVisits = async () => {
     try {
+      console.log('📊 Carregant visits de Supabase...');
       const { data, error } = await supabase
         .from('visits')
         .select('*')
         .order('week', { ascending: true });
 
       if (error) {
-        console.error('Error loading visits:', error);
+        console.error('❌ Error loading visits:', error);
         return;
       }
 
+      console.log('✅ Visits carregades:', data?.length, 'files');
       setVisitsData(data || []);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('❌ Error:', error);
     }
   };
 
@@ -532,7 +531,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                                      const data = getChartData().grouped[week];
                                      const height = (data.total / getChartData().maxTotal) * 100;
                                      return (
-                                         <div key={week} className="flex flex-col items-center group relative">
+                                         <div key={week} className="flex flex-col items-center group relative h-full">
                                               <div className="absolute bottom-full mb-2 bg-gray-800 text-white text-xs p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity w-40 text-center z-10">
                                                   <b>Setmana {week.split('-W')[1]}</b><br/>
                                                   Total: {data.total}<br/>
@@ -541,11 +540,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                                                   Orgànic: {data.organic}<br/>
                                                   Ads: {data.ads}
                                               </div>
-                                              <div className="w-12 sm:w-16 bg-gray-100 rounded-t-lg relative overflow-hidden flex flex-col justify-end hover:brightness-95 transition-all border border-gray-300" style={{ height: `${Math.max(height, 8)}%` }}>
-                                                  <div className="bg-brand-pink w-full" style={{ height: `${data.total > 0 ? (data.direct / data.total) * 100 : 0}%` }}></div>
-                                                  <div className="bg-brand-purple w-full" style={{ height: `${data.total > 0 ? (data.social / data.total) * 100 : 0}%` }}></div>
-                                                  <div className="bg-blue-400 w-full" style={{ height: `${data.total > 0 ? (data.organic / data.total) * 100 : 0}%` }}></div>
-                                                  <div className="bg-yellow-400 w-full" style={{ height: `${data.total > 0 ? (data.ads / data.total) * 100 : 0}%` }}></div>
+                                              <div className="w-12 sm:w-16 bg-gray-100 rounded-t-lg relative overflow-hidden flex flex-col justify-end hover:brightness-95 transition-all border border-gray-300" style={{ height: `${Math.max(height, 5)}%`, minHeight: '20px' }}>
+                                                  {data.direct > 0 && <div className="bg-brand-pink w-full" style={{ height: `${(data.direct / data.total) * 100}%` }}></div>}
+                                                  {data.social > 0 && <div className="bg-brand-purple w-full" style={{ height: `${(data.social / data.total) * 100}%` }}></div>}
+                                                  {data.organic > 0 && <div className="bg-blue-400 w-full" style={{ height: `${(data.organic / data.total) * 100}%` }}></div>}
+                                                  {data.ads > 0 && <div className="bg-yellow-400 w-full" style={{ height: `${(data.ads / data.total) * 100}%` }}></div>}
                                               </div>
                                               <span className="text-xs text-gray-400 mt-2 font-medium">Setm {week.split('-W')[1]}</span>
                                          </div>
