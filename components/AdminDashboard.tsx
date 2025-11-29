@@ -1,3 +1,6 @@
+
+
+
 import React, { useState } from 'react';
 import { useContent } from '../contexts/ContentContext';
 import { Language, Pack, CustomSection, Lead, Feature, Testimonial, FAQItem, AppContent, CameraItem, MobileRate, CallButtonConfig, StoreItem, FiberRate, Promotion } from '../types';
@@ -521,9 +524,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
             {activeTab === 'analytics' && (
                 <div className="space-y-8 max-w-5xl">
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                             <BarChart2 size={24} className="text-brand-purple" /> Visites Web Setmanals
-                        </h2>
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                 <BarChart2 size={24} className="text-brand-purple" /> Visites Web Setmanals
+                            </h2>
+                            <button 
+                                onClick={loadVisits}
+                                className="px-3 py-2 bg-brand-pink text-white rounded-lg hover:bg-[#a00065] transition-colors flex items-center gap-2 text-sm font-bold"
+                            >
+                                <RefreshCw size={16} /> Recarregar
+                            </button>
+                        </div>
                         
                         {visitsData && visitsData.length > 0 ? (
                             <div className="h-[500px] flex items-end gap-2 sm:gap-4 justify-center">
