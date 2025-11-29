@@ -14,7 +14,7 @@ interface AdminDashboardProps {
   onClose: () => void;
 }
 
-// Helper to compress images before saving to avoid DB/localStorage limits
+// Helper To compress images before saving to avoid DB/localStorage limits
 const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
