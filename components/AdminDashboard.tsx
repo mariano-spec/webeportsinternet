@@ -8,6 +8,7 @@ import { X, Upload, Save, Trash2, Plus, Layout, Smartphone, Wifi, Image as Image
 import { IMAGES, CALL_BUTTON_DEFAULT } from '../constants';
 import { AdminLogin } from './AdminLogin';
 import { logoutAdmin } from '../supabaseAuth';
+import { supabase } from '../lib/supabase';
 
 interface AdminDashboardProps {
   onClose: () => void;
@@ -68,6 +69,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
 
   // --- AUTH STATE ---
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [visitsData, setVisitsData] = useState<any[]>([]);
 
   // --- DASHBOARD STATE ---
   const [activeTab, setActiveTab] = useState<'general' | 'hero' | 'products' | 'mobile' | 'stores' | 'promotions' | 'features' | 'testimonials' | 'faq' | 'configurator' | 'footer' | 'sections' | 'leads' | 'data' | 'meteo' | 'analytics'>('general');
@@ -78,7 +80,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
 
   const handleLoginSuccess = () => {
     setIsAuthenticated(true);
+    loadVisits(); // Carregar visits quan es fa login
   };
+
+  // 🆕 Funció per carregar visits de Supabase
+  const loadVisits = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('visits')
+        .select('*')
+        .order('week', { ascending: true });
+
+      if (error) {
+        console.error('Error loading visits:', error);
+        return;
+      }
+
+      setVisitsData(data || []);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  // Carregar visits quan el component es munta
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      loadVisits();
+      // Recarregar cada 30 segons
+      const interval = setInterval(loadVisits, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated]);
 
   const handleLogout = async () => {
     await logoutAdmin();
@@ -106,7 +138,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-          alert("L'arxiu és massa gran, (>10MB). Si us plau, utilitza una imatge més petita.");
+          alert("L'arxiu és massa gran (>10MB). Si us plau, utilitza una imatge més petita.");
           return;
       }
       try {
@@ -333,9 +365,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   const getChartData = () => {
     const grouped: Record<string, { direct: number, social: number, organic: number, ads: number, total: number }> = {};
     const weeks: string[] = [];
-    const dataToUse = (visits && visits.length > 0) ? visits : [];
+    const dataToUse = (visitsData && visitsData.length > 0) ? visitsData : [];
 
-    dataToUse.forEach(v => {
+    dataToUse.forEach((v: any) => {
         if (!grouped[v.week]) {
             grouped[v.week] = { direct: 0, social: 0, organic: 0, ads: 0, total: 0 };
             weeks.push(v.week);
@@ -494,32 +526,43 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                              <BarChart2 size={24} className="text-brand-purple" /> Visites Web Setmanals
                         </h2>
                         
-                        <div className="h-64 flex items-end gap-2 sm:gap-4 justify-center">
-                             {getChartData().weeks.map((week, idx) => {
-                                 const data = getChartData().grouped[week];
-                                 const height = (data.total / getChartData().maxTotal) * 100;
-                                 return (
-                                     <div key={week} className="flex flex-col items-center group relative">
-                                          <div className="absolute bottom-full mb-2 bg-gray-800 text-white text-xs p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity w-32 text-center z-10">
-                                              <b>Setmana {week.split('W')[1]}</b><br/>
-                                              Total: {data.total}<br/>
-                                              Orgànic: {data.organic}<br/>
-                                              Directe: {data.direct}
-                                          </div>
-                                          <div className="w-12 sm:w-16 bg-gray-100 rounded-t-lg relative overflow-hidden flex flex-col justify-end hover:brightness-95 transition-all" style={{ height: `${Math.max(height, 5)}%` }}>
-                                              <div className="bg-brand-pink w-full" style={{ height: `${(data.direct / data.total) * 100}%` }}></div>
-                                              <div className="bg-brand-purple w-full" style={{ height: `${(data.social / data.total) * 100}%` }}></div>
-                                              <div className="bg-blue-400 w-full" style={{ height: `${(data.organic / data.total) * 100}%` }}></div>
-                                          </div>
-                                          <span className="text-xs text-gray-400 mt-2 font-medium">{week.split('W')[1]}</span>
-                                     </div>
-                                 )
-                             })}
-                        </div>
-                        <div className="flex gap-4 justify-center mt-6 text-xs text-gray-500">
+                        {visitsData && visitsData.length > 0 ? (
+                            <div className="h-64 flex items-end gap-2 sm:gap-4 justify-center">
+                                 {getChartData().weeks.map((week, idx) => {
+                                     const data = getChartData().grouped[week];
+                                     const height = (data.total / getChartData().maxTotal) * 100;
+                                     return (
+                                         <div key={week} className="flex flex-col items-center group relative">
+                                              <div className="absolute bottom-full mb-2 bg-gray-800 text-white text-xs p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity w-40 text-center z-10">
+                                                  <b>Setmana {week.split('-W')[1]}</b><br/>
+                                                  Total: {data.total}<br/>
+                                                  Directe: {data.direct}<br/>
+                                                  Social: {data.social}<br/>
+                                                  Orgànic: {data.organic}<br/>
+                                                  Ads: {data.ads}
+                                              </div>
+                                              <div className="w-12 sm:w-16 bg-gray-100 rounded-t-lg relative overflow-hidden flex flex-col justify-end hover:brightness-95 transition-all border border-gray-300" style={{ height: `${Math.max(height, 8)}%` }}>
+                                                  <div className="bg-brand-pink w-full" style={{ height: `${data.total > 0 ? (data.direct / data.total) * 100 : 0}%` }}></div>
+                                                  <div className="bg-brand-purple w-full" style={{ height: `${data.total > 0 ? (data.social / data.total) * 100 : 0}%` }}></div>
+                                                  <div className="bg-blue-400 w-full" style={{ height: `${data.total > 0 ? (data.organic / data.total) * 100 : 0}%` }}></div>
+                                                  <div className="bg-yellow-400 w-full" style={{ height: `${data.total > 0 ? (data.ads / data.total) * 100 : 0}%` }}></div>
+                                              </div>
+                                              <span className="text-xs text-gray-400 mt-2 font-medium">Setm {week.split('-W')[1]}</span>
+                                         </div>
+                                     )
+                                 })}
+                            </div>
+                        ) : (
+                            <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
+                                <p className="text-gray-500 font-medium">No hi ha dades de visites encara. Les estadístiques apareixeran quan els visitants accedeixin a la web.</p>
+                            </div>
+                        )}
+                        
+                        <div className="flex gap-4 justify-center mt-6 text-xs text-gray-500 flex-wrap">
                              <div className="flex items-center gap-1"><div className="w-3 h-3 bg-brand-pink rounded-sm"></div> Directe</div>
                              <div className="flex items-center gap-1"><div className="w-3 h-3 bg-brand-purple rounded-sm"></div> Social</div>
                              <div className="flex items-center gap-1"><div className="w-3 h-3 bg-blue-400 rounded-sm"></div> Orgànic</div>
+                             <div className="flex items-center gap-1"><div className="w-3 h-3 bg-yellow-400 rounded-sm"></div> Ads</div>
                         </div>
                     </div>
                 </div>
