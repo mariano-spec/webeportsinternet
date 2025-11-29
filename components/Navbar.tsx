@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Logo } from './Logo';
 import { Language } from '../types';
-import { Menu, X, Globe, Lock } from 'lucide-react';
+import { Menu, X, Globe } from 'lucide-react';
 import { useContent } from '../contexts/ContentContext';
 
 interface NavbarProps {
@@ -48,21 +47,10 @@ export const Navbar: React.FC<NavbarProps> = ({ lang, setLang, onOpenAdmin }) =>
               <Globe size={18} />
               {lang === 'ca' ? 'ES' : 'CA'}
             </button>
-
-            <button 
-              onClick={onOpenAdmin}
-              className="text-gray-400 hover:text-brand-purple transition-colors p-2"
-              title="Admin"
-            >
-              <Lock size={20} />
-            </button>
           </div>
 
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center gap-4">
-             <button onClick={onOpenAdmin} className="text-gray-400 p-1">
-                <Lock size={18} />
-             </button>
              <button 
               onClick={() => setLang(lang === 'ca' ? 'es' : 'ca')}
               className="text-sm font-bold text-brand-purple"
