@@ -527,7 +527,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                         </h2>
                         
                         {visitsData && visitsData.length > 0 ? (
-                            <div className="h-64 flex items-end gap-2 sm:gap-4 justify-center">
+                            <div className="h-[500px] flex items-end gap-2 sm:gap-4 justify-center">
                                  {getChartData().weeks.map((week, idx) => {
                                      const data = getChartData().grouped[week];
                                      const height = (data.total / getChartData().maxTotal) * 100;
