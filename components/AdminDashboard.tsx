@@ -106,7 +106,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-          alert("L'arxiu és massa gran (>10MB). Si us plau, utilitza una imatge més petita.");
+          alert("L'arxiu és massa gran, (>10MB). Si us plau, utilitza una imatge més petita.");
           return;
       }
       try {
