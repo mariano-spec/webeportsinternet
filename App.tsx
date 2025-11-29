@@ -20,11 +20,15 @@ import { ContentProvider, useContent } from './contexts/ContentContext';
 import { Language } from './types';
 import { Loader2 } from 'lucide-react';
 import { Logo } from './components/Logo';
+import { useAnalytics } from './useAnalytics';
 
 const AppContent: React.FC = () => {
   const [lang, setLang] = useState<Language>('ca');
   const [showAdmin, setShowAdmin] = useState(false);
   const { customSections, isLoading } = useContent();
+
+  // 🆕 Rastrejar visites automàticament
+  useAnalytics();
 
   if (isLoading) {
     return (
