@@ -1,4 +1,3 @@
-
 export type Language = 'ca' | 'es';
 
 export interface Translation {
@@ -113,7 +112,7 @@ export interface AppContent {
     stores: StoreItem[];
     promotions: Promotion[];
     meteo: MeteoConfig;
-    images: { logo: string; heroBg: string; footerLogo: string; };
+    images: { logo: string; heroBg: string; footerLogo: string; favicon: string; };
     heroOverlayOpacity: number;
     heroAlignment: string;
     customSections: CustomSection[];
@@ -154,7 +153,7 @@ export interface ContentContextType extends AppContent {
     deletePromotion: (id: string) => void;
 
     updateMeteo: (config: MeteoConfig) => void;
-    updateImage: (key: 'logo' | 'heroBg' | 'footerLogo', base64: string) => void;
+    updateImage: (key: 'logo' | 'heroBg' | 'footerLogo' | 'favicon', base64: string) => void;
     updateHeroOpacity: (opacity: number) => void;
     updateHeroAlignment: (alignment: string) => void;
     addCustomSection: (section: CustomSection) => void;

@@ -1,6 +1,3 @@
-
-
-
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { AppContent, ContentContextType, Language, Translation, Pack, CustomSection, Lead, MobileRate, Promotion, MeteoConfig, CallButtonConfig, StoreItem, FiberRate } from '../types';
 import { TRANSLATIONS, PACKS, FIBER_RATES, MOBILE_RATES, IMAGES, CUSTOM_SECTIONS, PROMOTIONS, METEO_DEFAULT, INITIAL_VISITS, CALL_BUTTON_DEFAULT, STORES } from '../constants';
@@ -295,7 +292,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const updateMeteo = (config: MeteoConfig) => setContent(prev => ({ ...prev, meteo: config }));
   
-  const updateImage = (key: 'logo' | 'heroBg' | 'footerLogo', base64: string) => setContent(prev => ({ ...prev, images: { ...prev.images, [key]: base64 } }));
+  const updateImage = (key: 'logo' | 'heroBg' | 'footerLogo' | 'favicon', base64: string) => setContent(prev => ({ ...prev, images: { ...prev.images, [key]: base64 } }));
   const updateHeroOpacity = (opacity: number) => setContent(prev => ({ ...prev, heroOverlayOpacity: opacity }));
   const updateHeroAlignment = (alignment: string) => setContent(prev => ({ ...prev, heroAlignment: alignment }));
 

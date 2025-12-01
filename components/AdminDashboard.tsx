@@ -70,7 +70,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   const [visitsData, setVisitsData] = useState<any[]>([]);
 
   // --- DASHBOARD STATE ---
-  const [activeTab, setActiveTab] = useState<'general' | 'hero' | 'products' | 'mobile' | 'stores' | 'promotions' | 'features' | 'testimonials' | 'faq' | 'configurator' | 'footer' | 'sections' | 'leads' | 'data' | 'meteo' | 'analytics'>('general');
+  const [activeTab, setActiveTab] = useState<'favicon' | 'general' | 'hero' | 'products' | 'mobile' | 'stores' | 'promotions' | 'features' | 'testimonials' | 'faq' | 'configurator' | 'footer' | 'sections' | 'leads' | 'data' | 'meteo' | 'analytics'>('general');
   const [editingLang, setEditingLang] = useState<Language>('ca');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
@@ -452,6 +452,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                 <button onClick={() => setActiveTab('general')} className={`w-full text-left px-4 py-3 rounded-lg font-medium flex items-center gap-3 ${activeTab === 'general' ? 'bg-brand-pink text-white' : 'text-gray-600 hover:bg-gray-50'}`}>
                     <ImageIcon size={18} /> General & Logo
                 </button>
+                <button onClick={() => setActiveTab('favicon')} className={`w-full text-left px-4 py-3 rounded-lg font-medium flex items-center gap-3 ${activeTab === 'favicon' ? 'bg-brand-pink text-white' : 'text-gray-600 hover:bg-gray-50'}`}>
+                    <ImageIcon size={18} /> Favicon
+                </button>
                 <button onClick={() => setActiveTab('hero')} className={`w-full text-left px-4 py-3 rounded-lg font-medium flex items-center gap-3 ${activeTab === 'hero' ? 'bg-brand-pink text-white' : 'text-gray-600 hover:bg-gray-50'}`}>
                     <Layout size={18} /> Portada (Hero)
                 </button>
@@ -511,6 +514,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
         {/* Mobile Tab Selector */}
         <div className="md:hidden bg-white border-b border-gray-200 p-2 flex overflow-x-auto gap-2 absolute w-full z-10 scrollbar-hide top-16">
              <button onClick={() => setActiveTab('general')} className={`whitespace-nowrap px-3 py-2 rounded-lg text-sm font-bold ${activeTab === 'general' ? 'bg-brand-pink text-white' : 'bg-gray-100'}`}>Logo</button>
+             <button onClick={() => setActiveTab('favicon')} className={`whitespace-nowrap px-3 py-2 rounded-lg text-sm font-bold ${activeTab === 'favicon' ? 'bg-brand-pink text-white' : 'bg-gray-100'}`}>Favicon</button>
              <button onClick={() => setActiveTab('hero')} className={`whitespace-nowrap px-3 py-2 rounded-lg text-sm font-bold ${activeTab === 'hero' ? 'bg-brand-pink text-white' : 'bg-gray-100'}`}>Portada</button>
              <button onClick={() => setActiveTab('products')} className={`whitespace-nowrap px-3 py-2 rounded-lg text-sm font-bold ${activeTab === 'products' ? 'bg-brand-pink text-white' : 'bg-gray-100'}`}>Paquets</button>
              <button onClick={() => setActiveTab('stores')} className={`whitespace-nowrap px-3 py-2 rounded-lg text-sm font-bold ${activeTab === 'stores' ? 'bg-brand-pink text-white' : 'bg-gray-100'}`}>Botigues</button>
@@ -582,6 +586,67 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                              <div className="flex items-center gap-1"><div className="w-3 h-3 bg-brand-purple rounded-sm"></div> Social</div>
                              <div className="flex items-center gap-1"><div className="w-3 h-3 bg-blue-400 rounded-sm"></div> Orgànic</div>
                              <div className="flex items-center gap-1"><div className="w-3 h-3 bg-yellow-400 rounded-sm"></div> Ads</div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* --- FAVICON TAB --- */}
+            {activeTab === 'favicon' && (
+                <div className="space-y-8 max-w-4xl">
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                            <ImageIcon size={20} className="text-brand-purple" /> Favicon del Web
+                        </h2>
+                        
+                        <p className="text-sm text-gray-600 mb-6">
+                            El favicon és la petita imatge que apareix a la pestanya del navegador. 
+                            Recomanem: PNG o ICO de 32x32px o 64x64px.
+                        </p>
+
+                        <div className="flex flex-col items-center gap-6">
+                            {/* VISTA PREVIA */}
+                            <div className="w-full">
+                                <label className="block text-sm font-medium text-gray-700 mb-3">Vista Previa</label>
+                                <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                    {images.favicon ? (
+                                        <>
+                                            <img src={images.favicon} alt="Favicon" className="w-8 h-8 rounded" />
+                                            <span className="text-sm text-gray-600">Favicon carregat correctament</span>
+                                        </>
+                                    ) : (
+                                        <div className="text-center w-full">
+                                            <span className="text-gray-400 text-sm">Cap favicon carregat. La web mostrarà la icona per defecte.</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* UPLOAD */}
+                            <div className="w-full space-y-3">
+                                <label className="cursor-pointer bg-brand-purple text-white px-4 py-3 rounded-xl hover:bg-brand-pink transition-colors flex items-center justify-center gap-2 w-full font-bold shadow-md hover:shadow-lg">
+                                    <Upload size={18} /> Pujar Favicon (PNG/ICO/SVG)
+                                    <input type="file" className="hidden" accept=".ico,.png,.svg,.jpg,.jpeg" onChange={(e) => handleImageUpload(e, 'favicon')} />
+                                </label>
+                                {images.favicon && (
+                                    <button onClick={() => handleRemoveImage('favicon')} className="text-red-500 hover:text-red-700 text-sm flex items-center justify-center gap-1 w-full font-medium py-2 border border-red-100 rounded-lg hover:bg-red-50">
+                                        <Trash2 size={14} /> Eliminar Favicon
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* INFORMACIÓ */}
+                            <div className="w-full bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <h3 className="font-bold text-blue-900 mb-2 flex items-center gap-2">
+                                    <HelpCircle size={16} /> Consells
+                                </h3>
+                                <ul className="text-sm text-blue-800 space-y-1">
+                                    <li>✓ Format: PNG, ICO o SVG</li>
+                                    <li>✓ Mida recomanada: 32x32px, 64x64px o 128x128px</li>
+                                    <li>✓ El fitxer es guardarà automàticament a la base de dades</li>
+                                    <li>✓ Apareixerà a la pestanya del navegador en 1-2 minuts</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>

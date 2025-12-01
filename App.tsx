@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { Features } from './components/Features';
@@ -25,10 +24,24 @@ import { useAnalytics } from './useAnalytics';
 const AppContent: React.FC = () => {
   const [lang, setLang] = useState<Language>('ca');
   const [showAdmin, setShowAdmin] = useState(false);
-  const { customSections, isLoading } = useContent();
+  const { customSections, isLoading, appContent } = useContent();
 
   // 🆕 Rastrejar visites automàticament
   useAnalytics();
+
+  // 🆕 Cargar favicon dinàmicamente
+  useEffect(() => {
+    if (appContent?.images?.favicon) {
+      const faviconLink = document.getElementById('favicon-link') as HTMLLinkElement;
+      if (faviconLink) {
+        faviconLink.href = appContent.images.favicon;
+      }
+      const appleFaviconLink = document.getElementById('apple-favicon-link') as HTMLLinkElement;
+      if (appleFaviconLink) {
+        appleFaviconLink.href = appContent.images.favicon;
+      }
+    }
+  }, [appContent?.images?.favicon]);
 
   if (isLoading) {
     return (
