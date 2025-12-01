@@ -134,7 +134,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, key: 'logo' | 'heroBg' | 'footerLogo') => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, key: 'logo' | 'heroBg' | 'footerLogo' | 'favicon') => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
@@ -142,17 +142,44 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
           return;
       }
       try {
-        const compressedBase64 = await compressImage(file);
-        updateImage(key, compressedBase64);
+        // NOVO: Para favicon, guardar en Supabase Storage
+        if (key === 'favicon') {
+          setSaveStatus('saving');
+          const fileName = `favicon-${Date.now()}.png`;
+          const { error: uploadError } = await supabase.storage
+              .from('app-assets')
+              .upload(fileName, file, { upsert: true });
+
+          if (uploadError) {
+            console.error('Storage upload error:', uploadError);
+            alert(`Error pujant favicon: ${uploadError.message}`);
+            setSaveStatus('error');
+            return;
+          }
+
+          // Obtener URL pública
+          const { data } = supabase.storage
+              .from('app-assets')
+              .getPublicUrl(fileName);
+
+          updateImage(key, data.publicUrl);
+          setSaveStatus('saved');
+          setTimeout(() => setSaveStatus('idle'), 2000);
+        } else {
+          // Para otros archivos, usar compresión base64
+          const compressedBase64 = await compressImage(file);
+          updateImage(key, compressedBase64);
+        }
       } catch (err) {
-        console.error("Image compression failed", err);
+        console.error("Image upload failed", err);
         alert("Error processant la imatge.");
+        setSaveStatus('error');
       }
     }
     e.target.value = '';
   };
 
-  const handleRemoveImage = (key: 'logo' | 'heroBg' | 'footerLogo') => {
+  const handleRemoveImage = (key: 'logo' | 'heroBg' | 'footerLogo' | 'favicon') => {
       updateImage(key, ''); 
   };
 
