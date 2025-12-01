@@ -985,7 +985,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                                 <div className="border rounded-lg">
                                     <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 border-b">
                                         <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                                            <span className="text-lg">🇪🇸</span> Versió Catalana
+                                            <span className="text-lg">⭐</span> Versió Catalana
                                         </h3>
                                     </div>
                                     <div className="p-4 space-y-4">
@@ -1500,4 +1500,4 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
       </div>
     </div>
   );
-};<span className="text-lg">⭐</span> Versió Catalana
+};
