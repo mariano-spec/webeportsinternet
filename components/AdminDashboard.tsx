@@ -1,14 +1,12 @@
-
-
-
 import React, { useState } from 'react';
 import { useContent } from '../contexts/ContentContext';
 import { Language, Pack, CustomSection, Lead, Feature, Testimonial, FAQItem, AppContent, CameraItem, MobileRate, CallButtonConfig, StoreItem, FiberRate, Promotion } from '../types';
-import { X, Upload, Save, Trash2, Plus, Layout, Smartphone, Wifi, Image as ImageIcon, RefreshCw, Users, Lock, Star, HelpCircle, Zap, Database, Download, AlertTriangle, Grid, Megaphone, Camera, ExternalLink, Eye, EyeOff, BarChart2, MapPin, Phone, Mail, Bell, Check, Move, LogOut, Store } from 'lucide-react';
+import { X, Upload, Save, Trash2, Plus, Layout, Smartphone, Wifi, Image as ImageIcon, RefreshCw, Users, Lock, Star, HelpCircle, Zap, Database, Download, AlertTriangle, Grid, Megaphone, Camera, ExternalLink, Eye, EyeOff, BarChart2, MapPin, Phone, Mail, Bell, Check, Move, LogOut, Store, Wand2 } from 'lucide-react';
 import { IMAGES, CALL_BUTTON_DEFAULT } from '../constants';
 import { AdminLogin } from './AdminLogin';
 import { logoutAdmin } from '../supabaseAuth';
 import { supabase } from '../lib/supabase';
+import { translateCatToEs, quickTranslateCatToEs } from '../lib/translator';
 
 interface AdminDashboardProps {
   onClose: () => void;
@@ -249,7 +247,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
       });
   };
   
-  const handleNewPromotion = () => {
+  const handleNewPromotion = async () => {
       const newPromo: Promotion = {
           id: `pr_${Date.now()}`,
           isActive: false,
@@ -261,6 +259,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
           textColor: '#FFFFFF'
       };
       addPromotion(newPromo);
+      
+      // Auto-translate de manera ràpida
+      const esTitle = await quickTranslateCatToEs(newPromo.title.ca);
+      const esText = await quickTranslateCatToEs(newPromo.text.ca);
+      
+      // Actualitzar amb les traduccions
+      updatePromotion({
+          ...newPromo,
+          title: { ca: newPromo.title.ca, es: esTitle },
+          text: { ca: newPromo.text.ca, es: esText }
+      });
   };
 
   const handleNewSection = () => {
@@ -971,15 +980,82 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                                         <Trash2 size={16} /> Eliminar
                                     </button>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-700">Títol (Negreta)</label>
-                                        <input value={promo.title[editingLang]} onChange={(e) => updatePromotion({ ...promo, title: { ...promo.title, [editingLang]: e.target.value } })} className="w-full p-2 border rounded-lg" />
+
+                                {/* CATALAN TAB */}
+                                <div className="border rounded-lg">
+                                    <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 border-b">
+                                        <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                                            <span className="text-lg">🇪🇸</span> Versió Catalana
+                                        </h3>
                                     </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-700">Text</label>
-                                        <input value={promo.text[editingLang]} onChange={(e) => updatePromotion({ ...promo, text: { ...promo.text, [editingLang]: e.target.value } })} className="w-full p-2 border rounded-lg" />
+                                    <div className="p-4 space-y-4">
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-700">Títol (Negreta)</label>
+                                            <input 
+                                                value={promo.title.ca} 
+                                                onChange={(e) => updatePromotion({ ...promo, title: { ...promo.title, ca: e.target.value } })} 
+                                                className="w-full p-2 border rounded-lg" 
+                                                placeholder="Ex: Fibra gratis"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-700">Text de la Promoció</label>
+                                            <input 
+                                                value={promo.text.ca} 
+                                                onChange={(e) => updatePromotion({ ...promo, text: { ...promo.text, ca: e.target.value } })} 
+                                                className="w-full p-2 border rounded-lg" 
+                                                placeholder="Ex: Gaudeix de 600 Mb de manera gratuïta aquest mes"
+                                            />
+                                        </div>
                                     </div>
+                                </div>
+
+                                {/* SPANISH TAB */}
+                                <div className="border rounded-lg">
+                                    <div className="bg-gradient-to-r from-red-50 to-yellow-50 p-4 border-b flex justify-between items-center">
+                                        <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                                            <span className="text-lg">🇪🇸</span> Versió Espanyola
+                                        </h3>
+                                        <button 
+                                            onClick={async () => {
+                                                const esTitle = quickTranslateCatToEs(promo.title.ca);
+                                                const esText = quickTranslateCatToEs(promo.text.ca);
+                                                updatePromotion({
+                                                    ...promo,
+                                                    title: { ...promo.title, es: esTitle },
+                                                    text: { ...promo.text, es: esText }
+                                                });
+                                            }}
+                                            className="text-xs bg-brand-purple text-white px-2 py-1 rounded flex items-center gap-1 hover:bg-brand-pink transition"
+                                            title="Traduir automàticament del català"
+                                        >
+                                            <Wand2 size={14} /> Auto-traduir
+                                        </button>
+                                    </div>
+                                    <div className="p-4 space-y-4">
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-700">Títol (Negreta)</label>
+                                            <input 
+                                                value={promo.title.es} 
+                                                onChange={(e) => updatePromotion({ ...promo, title: { ...promo.title, es: e.target.value } })} 
+                                                className="w-full p-2 border rounded-lg" 
+                                                placeholder="Ex: Fibra gratis"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-700">Text de la Promoció</label>
+                                            <input 
+                                                value={promo.text.es} 
+                                                onChange={(e) => updatePromotion({ ...promo, text: { ...promo.text, es: e.target.value } })} 
+                                                className="w-full p-2 border rounded-lg" 
+                                                placeholder="Ex: Disfruta de 600 Mb de manera gratuita este mes"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* DATES & COLORS */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg border">
                                     <div>
                                         <label className="text-sm font-medium text-gray-700">Data Inici</label>
                                         <input type="date" value={promo.startDate.split('T')[0]} onChange={(e) => updatePromotion({ ...promo, startDate: new Date(e.target.value).toISOString() })} className="w-full p-2 border rounded-lg" />
@@ -992,15 +1068,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                                         <label className="text-sm font-medium text-gray-700">Color de Fons</label>
                                         <div className="flex gap-2">
                                             <input type="color" value={promo.backgroundColor} onChange={(e) => updatePromotion({ ...promo, backgroundColor: e.target.value })} className="h-10 w-20 p-1 rounded border" />
-                                            <input type="text" value={promo.backgroundColor} onChange={(e) => updatePromotion({ ...promo, backgroundColor: e.target.value })} className="flex-1 p-2 border rounded-lg" />
+                                            <input type="text" value={promo.backgroundColor} onChange={(e) => updatePromotion({ ...promo, backgroundColor: e.target.value })} className="flex-1 p-2 border rounded-lg text-xs" />
                                         </div>
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-gray-700">Color de Text</label>
                                         <div className="flex gap-2">
                                             <input type="color" value={promo.textColor} onChange={(e) => updatePromotion({ ...promo, textColor: e.target.value })} className="h-10 w-20 p-1 rounded border" />
-                                            <input type="text" value={promo.textColor} onChange={(e) => updatePromotion({ ...promo, textColor: e.target.value })} className="flex-1 p-2 border rounded-lg" />
+                                            <input type="text" value={promo.textColor} onChange={(e) => updatePromotion({ ...promo, textColor: e.target.value })} className="flex-1 p-2 border rounded-lg text-xs" />
                                         </div>
+                                    </div>
+                                </div>
+
+                                {/* PREVIEW */}
+                                <div className="p-4 rounded-lg border-2 border-gray-300" style={{ backgroundColor: promo.backgroundColor, color: promo.textColor }}>
+                                    <div className="flex gap-2 items-center">
+                                        <span className="uppercase tracking-wider opacity-90 font-bold">{promo.title.ca}</span>
+                                        <span className="hidden sm:inline">|</span>
+                                        <span className="hidden sm:inline">{promo.text.ca}</span>
                                     </div>
                                 </div>
                             </div>
