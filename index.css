@@ -1,6 +1,6 @@
 @font-face {
   font-family: 'Gotham Rounded';
-  src: url('/fonts/Gotham_Rounded_Bold.otf') format('opentype');
+  src: url('/fonts/Gotham_Rounded_Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
 }
