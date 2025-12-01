@@ -5,25 +5,19 @@
 
 const GOOGLE_TRANSLATE_API = 'https://translate.googleapis.com/translate_a/element.js';
 
-/**
- * Tradueix text de català a espanyol usant Google Translate
- * Nota: Per producció, seria millor usar l'API oficial de Google Cloud Translation
- */
 export async function translateCatToEs(text: string): Promise<string> {
   try {
-    // Si el text és massa curt o buit, retorna directament
     if (!text || text.trim().length === 0) {
       return text;
     }
 
-    // Usar la API del navegador de Google Translate (simple, sense claus API)
     const response = await fetch(
       `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ca|es`
     );
 
     if (!response.ok) {
       console.warn('Translation API unavailable, using fallback');
-      return text; // Fallback: retorna el text original
+      return text;
     }
 
     const data = await response.json();
@@ -32,16 +26,13 @@ export async function translateCatToEs(text: string): Promise<string> {
       return data.responseData.translatedText;
     }
 
-    return text; // Fallback
+    return text;
   } catch (error) {
     console.error('Translation error:', error);
-    return text; // Fallback en cas d'error
+    return text;
   }
 }
 
-/**
- * Tradueix múltiples textos en paral·lel
- */
 export async function translateMultiple(texts: string[]): Promise<string[]> {
   try {
     const translations = await Promise.all(
@@ -50,50 +41,103 @@ export async function translateMultiple(texts: string[]): Promise<string[]> {
     return translations;
   } catch (error) {
     console.error('Batch translation error:', error);
-    return texts; // Fallback: retorna els texts originals
+    return texts;
   }
 }
 
-/**
- * Diccionari manual per a termes comuns (fallback ràpid)
- * Útil per a cas quan l'API no està disponible
- */
 const MANUAL_TRANSLATIONS: Record<string, string> = {
-  // Promocions comunes
   'nova promoció': 'nueva promoción',
   'oferta especial': 'oferta especial',
   'descompte': 'descuento',
+  'descuentos': 'descuentos',
   'promoció': 'promoción',
+  'promociones': 'promociones',
   'aprovecha': 'aprovecha',
   'ara': 'ahora',
+  'ahora': 'ahora',
   'limitat': 'limitado',
+  'limitado': 'limitado',
   'temps limitat': 'tiempo limitado',
+  'tiempo limitado': 'tiempo limitado',
   'fibra': 'fibra',
+  'fibre': 'fibra',
   'internet': 'internet',
   'mòbil': 'móvil',
+  'movil': 'móvil',
+  'más velocidad': 'más velocidad',
   'més velocitat': 'más velocidad',
+  'mes dades': 'más datos',
   'més dades': 'más datos',
+  'more data': 'más datos',
   'gratis': 'gratis',
+  'gratuit': 'gratis',
+  'free': 'gratis',
   'sense cost': 'sin costo',
+  'sin costo': 'sin costo',
   'primer mes': 'primer mes',
+  'primer month': 'primer mes',
+  'first month': 'primer mes',
   'igualmente': 'igualmente',
   'contacta': 'contacta',
+  'contact': 'contacta',
   'crida': 'llamada',
+  'llamada': 'llamada',
+  'call': 'llamada',
   'telèfon': 'teléfono',
+  'telefono': 'teléfono',
+  'phone': 'teléfono',
+  'gaudeix': 'disfruta',
+  'disfruta': 'disfruta',
+  'enjoy': 'disfruta',
+  'velocitat': 'velocidad',
+  'velocidad': 'velocidad',
+  'speed': 'velocidad',
+  'dades': 'datos',
+  'datos': 'datos',
+  'data': 'datos',
+  'pack': 'pack',
+  'packs': 'packs',
+  'familia': 'familia',
+  'família': 'familia',
+  'family': 'familia',
+  'sms': 'sms',
+  'calls': 'llamadas',
+  'whatsapp': 'whatsapp',
+  'unlimited': 'ilimitado',
+  'ilimitat': 'ilimitado',
+  'mes': 'mes',
+  'months': 'meses',
+  'mesos': 'meses',
+  'black friday': 'black friday',
+  'cyber monday': 'cyber monday',
+  'oferta': 'oferta',
+  'offer': 'oferta',
+  'especial': 'especial',
+  'special': 'especial',
+  'limited': 'limitado',
+  'limited time': 'tiempo limitado',
+  'valid': 'válido',
+  'valid until': 'válido hasta',
+  'visit': 'visita',
+  'visita': 'visita',
+  'store': 'tienda',
+  'botiga': 'tienda',
+  'now': 'ahora',
+  'dont miss': 'no te pierdas',
+  'no perdis': 'no te pierdas',
 };
 
-/**
- * Traducció ràpida usant diccionari manual (sense API)
- * Bé per a textos curts i promocions
- */
 export function quickTranslateCatToEs(text: string): string {
   if (!text) return '';
   
   let result = text;
   
-  // Aplicar diccionari (case-insensitive per a frases complertes)
-  for (const [cat, es] of Object.entries(MANUAL_TRANSLATIONS)) {
-    const regex = new RegExp(`\\b${cat}\\b`, 'gi');
+  const sortedTranslations = Object.entries(MANUAL_TRANSLATIONS).sort(
+    (a, b) => b[0].length - a[0].length
+  );
+  
+  for (const [cat, es] of sortedTranslations) {
+    const regex = new RegExp(`${cat}`, 'gi');
     result = result.replace(regex, es);
   }
   

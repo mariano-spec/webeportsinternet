@@ -1500,4 +1500,4 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
       </div>
     </div>
   );
-};
+};<span className="text-lg">⭐</span> Versió Catalana
