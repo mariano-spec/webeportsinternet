@@ -187,7 +187,8 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
        const { error } = await supabase
         .from('site_content')
-        .upsert({ id: 1, content: contentToSave });
+        .update({ content: contentToSave })
+        .eq('id', 1);
        
        if (error) throw error;
        console.log("Config saved successfully.");
