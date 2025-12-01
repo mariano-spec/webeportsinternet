@@ -33,10 +33,10 @@ const AppContent: React.FC = () => {
   if (isLoading) {
     return (
       <div className="fixed inset-0 bg-white z-[9999] flex flex-col items-center justify-center animate-fade-in">
-         <div className="text-4xl md:text-5xl font-black tracking-tighter mb-8 animate-pulse flex items-center justify-center">
-            <span className="text-brand-pink">Eports</span>
-            <span className="text-brand-purple">Internet</span>
-         </div>
+         <div className="text-4xl md:text-5xl font-black tracking-tighter mb-8 animate-pulse flex items-center justify-center" style={{ fontFamily: 'Gotham Rounded', letterSpacing: '-0.075em' }}>
+   <span className="text-brand-pink">Eports</span>
+   <span className="text-brand-purple">Internet</span>
+</div>
          <Loader2 className="w-10 h-10 text-brand-pink animate-spin" />
          <p className="mt-4 text-gray-400 font-medium text-sm tracking-widest uppercase">Carregant...</p>
       </div>
